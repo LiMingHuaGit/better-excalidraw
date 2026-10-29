@@ -6,7 +6,15 @@ type PageUiOptions = {
     bounds: DrawnShapeBounds,
   ) => Promise<void>;
   onOpenWorkspace: () => Promise<void>;
+  onSelectionOperation: (operation: SelectionOperation) => Promise<void>;
 };
+
+export type SelectionOperation =
+  | "duplicate"
+  | "rotateClockwise"
+  | "rotateCounterclockwise"
+  | "flipHorizontal"
+  | "flipVertical";
 
 export type DrawnShapeBounds = {
   centerX: number;
@@ -19,6 +27,8 @@ const STYLE_ID = "better-excalidraw-page-ui-styles";
 const WORKSPACE_BUTTON_ID = "better-excalidraw-workspace-button";
 const SHAPES_BUTTON_ID = "better-excalidraw-shapes-button";
 const SHAPES_PANEL_ID = "better-excalidraw-shapes-panel";
+const OPERATIONS_BUTTON_ID = "better-excalidraw-operations-button";
+const OPERATIONS_PANEL_ID = "better-excalidraw-operations-panel";
 const TOAST_ID = "better-excalidraw-page-toast";
 const DRAW_PREVIEW_ID = "better-excalidraw-draw-preview";
 const DRAW_HINT_ID = "better-excalidraw-draw-hint";
@@ -42,6 +52,42 @@ const SHAPES: Array<{
   },
 ];
 
+const SELECTION_OPERATIONS: Array<{
+  operation: SelectionOperation;
+  label: string;
+  shortcut?: string;
+  icon: string;
+}> = [
+  {
+    operation: "duplicate",
+    label: "复制一份",
+    shortcut: "Ctrl/⌘ D",
+    icon: '<rect x="7" y="7" width="11" height="11" rx="2"/><path d="M15 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  },
+  {
+    operation: "rotateClockwise",
+    label: "顺时针旋转 90°",
+    icon: '<path d="M19 8V3m0 0h-5m5 0-3.2 3.2A8 8 0 1 0 20 13"/>',
+  },
+  {
+    operation: "rotateCounterclockwise",
+    label: "逆时针旋转 90°",
+    icon: '<path d="M5 8V3m0 0h5M5 3l3.2 3.2A8 8 0 1 1 4 13"/>',
+  },
+  {
+    operation: "flipHorizontal",
+    label: "水平翻转",
+    shortcut: "Shift H",
+    icon: '<path d="M12 3v18M9 5 3 9v6l6 4V5Zm6 0 6 4v6l-6 4V5Z"/>',
+  },
+  {
+    operation: "flipVertical",
+    label: "垂直翻转",
+    shortcut: "Shift V",
+    icon: '<path d="M3 12h18M5 9l4-6h6l4 6H5Zm0 6 4 6h6l4-6H5Z"/>',
+  },
+];
+
 function workspaceIcon(): string {
   return `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -56,6 +102,15 @@ function shapesIcon(): string {
       <path d="m7 3 5 8H2l5-8Z"/>
       <rect x="13.5" y="3.5" width="7" height="7" rx="1"/>
       <circle cx="16.5" cy="17" r="4"/>
+    </svg>`;
+}
+
+function operationsIcon(): string {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.5"/>
+      <circle cx="12" cy="12" r="1.5"/>
+      <circle cx="19" cy="12" r="1.5"/>
     </svg>`;
 }
 
@@ -103,7 +158,8 @@ function ensureStyles(): void {
       stroke-linejoin: round;
     }
     #${WORKSPACE_BUTTON_ID} { top: 76px; left: 16px; }
-    #${SHAPES_BUTTON_ID} { top: 12px; right: 16px; }
+    #${SHAPES_BUTTON_ID} { top: 12px; right: 66px; }
+    #${OPERATIONS_BUTTON_ID} { top: 12px; right: 16px; }
     #${SHAPES_BUTTON_ID}[aria-expanded="true"] {
       color: var(--color-primary, #6965db);
       background: var(--button-active-bg, #e9e7ff);
@@ -117,6 +173,22 @@ function ensureStyles(): void {
       z-index: 21;
       width: 252px;
       padding: 10px;
+      border: 1px solid var(--default-border-color, rgba(0, 0, 0, .12));
+      border-radius: 12px;
+      color: var(--text-primary-color, #1b1b1f);
+      background: var(--island-bg-color, #fff);
+      box-shadow: var(--shadow-island, 0 6px 24px rgba(0, 0, 0, .18));
+      animation: better-excalidraw-panel-in 120ms ease-out;
+    }
+    #${OPERATIONS_BUTTON_ID}[aria-expanded="true"] {
+      color: var(--color-primary, #6965db);
+      background: var(--button-active-bg, #e9e7ff);
+    }
+    #${OPERATIONS_PANEL_ID} {
+      position: fixed;
+      z-index: 21;
+      width: 230px;
+      padding: 7px;
       border: 1px solid var(--default-border-color, rgba(0, 0, 0, .12));
       border-radius: 12px;
       color: var(--text-primary-color, #1b1b1f);
@@ -163,6 +235,42 @@ function ensureStyles(): void {
       stroke: currentColor;
       stroke-width: 1.6;
       stroke-linejoin: round;
+    }
+    .better-excalidraw-operation-option {
+      width: 100%;
+      min-height: 38px;
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 9px;
+      border: 0;
+      border-radius: 8px;
+      color: inherit;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font: 500 13px/18px system-ui, sans-serif;
+    }
+    .better-excalidraw-operation-option:hover,
+    .better-excalidraw-operation-option:focus-visible {
+      color: var(--color-primary, #6965db);
+      background: var(--button-hover-bg, #f1f0ff);
+      outline: 0;
+    }
+    .better-excalidraw-operation-option svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .better-excalidraw-operation-shortcut {
+      color: var(--text-secondary-color, #777780);
+      font-size: 11px;
+      font-weight: 500;
     }
     html.better-excalidraw-drawing .excalidraw canvas {
       cursor: crosshair !important;
@@ -214,10 +322,11 @@ function ensureStyles(): void {
     }
     @media (max-width: 700px) {
       #${WORKSPACE_BUTTON_ID} { top: 68px; left: 8px; }
-      #${SHAPES_BUTTON_ID} { right: 8px; }
+      #${SHAPES_BUTTON_ID} { right: 58px; }
+      #${OPERATIONS_BUTTON_ID} { right: 8px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      #${SHAPES_PANEL_ID} { animation: none; }
+      #${SHAPES_PANEL_ID}, #${OPERATIONS_PANEL_ID} { animation: none; }
       .better-excalidraw-page-button { transition: none; }
     }
   `;
@@ -246,25 +355,42 @@ function findNativeToolbar(): HTMLElement | null {
 }
 
 function positionShapeControls(): void {
-  const button = document.getElementById(SHAPES_BUTTON_ID);
-  if (!button) return;
+  const shapesButton = document.getElementById(SHAPES_BUTTON_ID);
+  const operationsButton = document.getElementById(OPERATIONS_BUTTON_ID);
+  if (!shapesButton || !operationsButton) return;
   const toolbar = findNativeToolbar();
   if (toolbar) {
     const rect = toolbar.getBoundingClientRect();
     const preferredLeft = rect.right + 10;
-    const left = preferredLeft + 44 <= window.innerWidth - 8 ? preferredLeft : rect.left - 54;
-    button.style.left = `${Math.max(8, left)}px`;
-    button.style.right = "auto";
-    button.style.top = `${Math.max(8, rect.top)}px`;
+    const fitsRight = preferredLeft + 94 <= window.innerWidth - 8;
+    const shapesLeft = fitsRight ? preferredLeft : rect.left - 104;
+    const operationsLeft = shapesLeft + 50;
+    for (const [button, left] of [
+      [shapesButton, shapesLeft],
+      [operationsButton, operationsLeft],
+    ] as const) {
+      button.style.left = `${Math.max(8, left)}px`;
+      button.style.right = "auto";
+      button.style.top = `${Math.max(8, rect.top)}px`;
+    }
   }
 
-  const panel = document.getElementById(SHAPES_PANEL_ID);
-  if (!panel) return;
-  const buttonRect = button.getBoundingClientRect();
-  const panelWidth = panel.getBoundingClientRect().width || 252;
-  const left = Math.min(window.innerWidth - panelWidth - 8, Math.max(8, buttonRect.right - panelWidth));
-  panel.style.left = `${left}px`;
-  panel.style.top = `${buttonRect.bottom + 8}px`;
+  for (const [panelId, button] of [
+    [SHAPES_PANEL_ID, shapesButton],
+    [OPERATIONS_PANEL_ID, operationsButton],
+  ] as const) {
+    const panel = document.getElementById(panelId);
+    if (!panel) continue;
+    const buttonRect = button.getBoundingClientRect();
+    const fallbackWidth = panelId === SHAPES_PANEL_ID ? 252 : 230;
+    const panelWidth = panel.getBoundingClientRect().width || fallbackWidth;
+    const left = Math.min(
+      window.innerWidth - panelWidth - 8,
+      Math.max(8, buttonRect.right - panelWidth),
+    );
+    panel.style.left = `${left}px`;
+    panel.style.top = `${buttonRect.bottom + 8}px`;
+  }
 }
 
 function showToast(message: string): void {
@@ -282,7 +408,15 @@ function closeShapesPanel(): void {
   document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-expanded", "false");
 }
 
+function closeOperationsPanel(): void {
+  document.getElementById(OPERATIONS_PANEL_ID)?.remove();
+  document
+    .getElementById(OPERATIONS_BUTTON_ID)
+    ?.setAttribute("aria-expanded", "false");
+}
+
 function openShapesPanel(onSelectShape: (shape: (typeof SHAPES)[number]) => void): void {
+  closeOperationsPanel();
   closeShapesPanel();
   const panel = document.createElement("div");
   panel.id = SHAPES_PANEL_ID;
@@ -314,7 +448,44 @@ function openShapesPanel(onSelectShape: (shape: (typeof SHAPES)[number]) => void
   positionShapeControls();
 }
 
-function ensureButtons(options: PageUiOptions, toggleShapesPanel: () => void): void {
+function openOperationsPanel(
+  onSelectOperation: (operation: SelectionOperation) => void,
+): void {
+  closeShapesPanel();
+  closeOperationsPanel();
+  const panel = document.createElement("div");
+  panel.id = OPERATIONS_PANEL_ID;
+  panel.setAttribute("role", "menu");
+  panel.setAttribute("aria-label", "选中图形操作");
+  panel.innerHTML = SELECTION_OPERATIONS.map(
+    (item) => `
+      <button class="better-excalidraw-operation-option" type="button" role="menuitem" data-operation="${item.operation}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">${item.icon}</svg>
+        <span>${item.label}</span>
+        <span class="better-excalidraw-operation-shortcut">${item.shortcut ?? ""}</span>
+      </button>`,
+  ).join("");
+  panel.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement).closest<HTMLButtonElement>(
+      "[data-operation]",
+    );
+    const operation = target?.dataset.operation as SelectionOperation | undefined;
+    if (!operation) return;
+    closeOperationsPanel();
+    onSelectOperation(operation);
+  });
+  document.body.append(panel);
+  document
+    .getElementById(OPERATIONS_BUTTON_ID)
+    ?.setAttribute("aria-expanded", "true");
+  positionShapeControls();
+}
+
+function ensureButtons(
+  options: PageUiOptions,
+  toggleShapesPanel: () => void,
+  toggleOperationsPanel: () => void,
+): void {
   if (!document.body) return;
   ensureStyles();
 
@@ -345,6 +516,19 @@ function ensureButtons(options: PageUiOptions, toggleShapesPanel: () => void): v
     button.setAttribute("aria-pressed", "false");
     button.innerHTML = shapesIcon();
     button.addEventListener("click", toggleShapesPanel);
+    document.body.append(button);
+  }
+
+  if (!document.getElementById(OPERATIONS_BUTTON_ID)) {
+    const button = document.createElement("button");
+    button.id = OPERATIONS_BUTTON_ID;
+    button.className = "better-excalidraw-page-button";
+    button.type = "button";
+    button.title = "选中图形操作";
+    button.setAttribute("aria-label", "选中图形操作");
+    button.setAttribute("aria-expanded", "false");
+    button.innerHTML = operationsIcon();
+    button.addEventListener("click", toggleOperationsPanel);
     document.body.append(button);
   }
 
@@ -386,12 +570,26 @@ export function installPageUi(options: PageUiOptions): () => void {
     else openShapesPanel(activateShapeTool);
   };
 
-  const scheduleEnsure = () => {
-    window.cancelAnimationFrame(frame);
-    frame = window.requestAnimationFrame(() => ensureButtons(options, toggleShapesPanel));
+  const runSelectionOperation = (operation: SelectionOperation) => {
+    void options.onSelectionOperation(operation).catch((error: unknown) => {
+      showToast(error instanceof Error ? error.message : String(error));
+    });
   };
 
-  ensureButtons(options, toggleShapesPanel);
+  const toggleOperationsPanel = () => {
+    if (activeShape) deactivateShapeTool();
+    if (document.getElementById(OPERATIONS_PANEL_ID)) closeOperationsPanel();
+    else openOperationsPanel(runSelectionOperation);
+  };
+
+  const scheduleEnsure = () => {
+    window.cancelAnimationFrame(frame);
+    frame = window.requestAnimationFrame(() =>
+      ensureButtons(options, toggleShapesPanel, toggleOperationsPanel),
+    );
+  };
+
+  ensureButtons(options, toggleShapesPanel, toggleOperationsPanel);
   const observer = new MutationObserver(scheduleEnsure);
   observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("resize", scheduleEnsure);
@@ -400,7 +598,16 @@ export function installPageUi(options: PageUiOptions): () => void {
     const target = event.target as Node;
     const panel = document.getElementById(SHAPES_PANEL_ID);
     const button = document.getElementById(SHAPES_BUTTON_ID);
+    const operationsPanel = document.getElementById(OPERATIONS_PANEL_ID);
+    const operationsButton = document.getElementById(OPERATIONS_BUTTON_ID);
     if (panel && !panel.contains(target) && !button?.contains(target)) closeShapesPanel();
+    if (
+      operationsPanel &&
+      !operationsPanel.contains(target) &&
+      !operationsButton?.contains(target)
+    ) {
+      closeOperationsPanel();
+    }
     if (
       activeShape &&
       target instanceof Element &&
@@ -414,7 +621,10 @@ export function installPageUi(options: PageUiOptions): () => void {
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.key !== "Escape") return;
     if (activeShape) deactivateShapeTool();
-    else closeShapesPanel();
+    else {
+      closeShapesPanel();
+      closeOperationsPanel();
+    }
   };
 
   const getBounds = (event: PointerEvent) => {
@@ -514,5 +724,7 @@ export function installPageUi(options: PageUiOptions): () => void {
     document.getElementById(WORKSPACE_BUTTON_ID)?.remove();
     document.getElementById(SHAPES_BUTTON_ID)?.remove();
     document.getElementById(SHAPES_PANEL_ID)?.remove();
+    document.getElementById(OPERATIONS_BUTTON_ID)?.remove();
+    document.getElementById(OPERATIONS_PANEL_ID)?.remove();
   };
 }

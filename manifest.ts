@@ -3,7 +3,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
   manifest_version: 3,
   name: "Better Excalidraw Workspace",
-  version: "0.4.0",
+  version: "0.5.0",
   description: "Local workspaces and extended geometry tools for Excalidraw.",
   minimum_chrome_version: "116",
   permissions: ["sidePanel", "storage"],
