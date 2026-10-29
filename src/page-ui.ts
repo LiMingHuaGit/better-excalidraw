@@ -1,8 +1,18 @@
 import type { ExtendedShapeKind } from "./geometry";
 
 type PageUiOptions = {
-  onInsertShape: (kind: ExtendedShapeKind) => Promise<void>;
+  onDrawShape: (
+    kind: ExtendedShapeKind,
+    bounds: DrawnShapeBounds,
+  ) => Promise<void>;
   onOpenWorkspace: () => Promise<void>;
+};
+
+export type DrawnShapeBounds = {
+  centerX: number;
+  centerY: number;
+  height: number;
+  width: number;
 };
 
 const STYLE_ID = "better-excalidraw-page-ui-styles";
@@ -10,6 +20,8 @@ const WORKSPACE_BUTTON_ID = "better-excalidraw-workspace-button";
 const SHAPES_BUTTON_ID = "better-excalidraw-shapes-button";
 const SHAPES_PANEL_ID = "better-excalidraw-shapes-panel";
 const TOAST_ID = "better-excalidraw-page-toast";
+const DRAW_PREVIEW_ID = "better-excalidraw-draw-preview";
+const DRAW_HINT_ID = "better-excalidraw-draw-hint";
 
 const SHAPES: Array<{
   kind: ExtendedShapeKind;
@@ -96,6 +108,10 @@ function ensureStyles(): void {
       color: var(--color-primary, #6965db);
       background: var(--button-active-bg, #e9e7ff);
     }
+    #${SHAPES_BUTTON_ID}[aria-pressed="true"] {
+      color: var(--color-primary, #6965db);
+      background: var(--button-active-bg, #e9e7ff);
+    }
     #${SHAPES_PANEL_ID} {
       position: fixed;
       z-index: 21;
@@ -147,6 +163,40 @@ function ensureStyles(): void {
       stroke: currentColor;
       stroke-width: 1.6;
       stroke-linejoin: round;
+    }
+    html.better-excalidraw-drawing .excalidraw canvas {
+      cursor: crosshair !important;
+    }
+    #${DRAW_PREVIEW_ID} {
+      position: fixed;
+      z-index: 19;
+      pointer-events: none;
+    }
+    #${DRAW_PREVIEW_ID} svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    #${DRAW_PREVIEW_ID} polygon {
+      fill: rgba(105, 101, 219, .08);
+      stroke: var(--color-primary, #6965db);
+      stroke-width: 2;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    #${DRAW_HINT_ID} {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 21;
+      padding: 8px 12px;
+      border-radius: 9px;
+      color: #fff;
+      background: rgba(31, 31, 42, .88);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .2);
+      transform: translateX(-50%);
+      pointer-events: none;
+      font: 600 12px/16px system-ui, sans-serif;
     }
     #${TOAST_ID} {
       position: fixed;
@@ -232,7 +282,7 @@ function closeShapesPanel(): void {
   document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-expanded", "false");
 }
 
-function openShapesPanel(options: PageUiOptions): void {
+function openShapesPanel(onSelectShape: (shape: (typeof SHAPES)[number]) => void): void {
   closeShapesPanel();
   const panel = document.createElement("div");
   panel.id = SHAPES_PANEL_ID;
@@ -254,21 +304,17 @@ function openShapesPanel(options: PageUiOptions): void {
     if (!target) return;
     const kind = target.dataset.shape as ExtendedShapeKind | undefined;
     if (!kind) return;
-    target.disabled = true;
-    void options
-      .onInsertShape(kind)
-      .then(() => closeShapesPanel())
-      .catch((error: unknown) => {
-        target.disabled = false;
-        showToast(error instanceof Error ? error.message : String(error));
-      });
+    const shape = SHAPES.find((item) => item.kind === kind);
+    if (!shape) return;
+    onSelectShape(shape);
+    closeShapesPanel();
   });
   document.body.append(panel);
   document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-expanded", "true");
   positionShapeControls();
 }
 
-function ensureButtons(options: PageUiOptions): void {
+function ensureButtons(options: PageUiOptions, toggleShapesPanel: () => void): void {
   if (!document.body) return;
   ensureStyles();
 
@@ -296,11 +342,9 @@ function ensureButtons(options: PageUiOptions): void {
     button.title = "扩展图形";
     button.setAttribute("aria-label", "扩展图形");
     button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-pressed", "false");
     button.innerHTML = shapesIcon();
-    button.addEventListener("click", () => {
-      if (document.getElementById(SHAPES_PANEL_ID)) closeShapesPanel();
-      else openShapesPanel(options);
-    });
+    button.addEventListener("click", toggleShapesPanel);
     document.body.append(button);
   }
 
@@ -309,12 +353,45 @@ function ensureButtons(options: PageUiOptions): void {
 
 export function installPageUi(options: PageUiOptions): () => void {
   let frame = 0;
-  const scheduleEnsure = () => {
-    window.cancelAnimationFrame(frame);
-    frame = window.requestAnimationFrame(() => ensureButtons(options));
+  let activeShape: (typeof SHAPES)[number] | null = null;
+  let dragStart: { x: number; y: number; pointerId: number } | null = null;
+
+  const removeDrawPreview = () => {
+    document.getElementById(DRAW_PREVIEW_ID)?.remove();
   };
 
-  ensureButtons(options);
+  const deactivateShapeTool = () => {
+    activeShape = null;
+    dragStart = null;
+    removeDrawPreview();
+    document.getElementById(DRAW_HINT_ID)?.remove();
+    document.documentElement.classList.remove("better-excalidraw-drawing");
+    document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-pressed", "false");
+  };
+
+  const activateShapeTool = (shape: (typeof SHAPES)[number]) => {
+    activeShape = shape;
+    removeDrawPreview();
+    document.documentElement.classList.add("better-excalidraw-drawing");
+    document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-pressed", "true");
+    document.getElementById(DRAW_HINT_ID)?.remove();
+    const hint = document.createElement("div");
+    hint.id = DRAW_HINT_ID;
+    hint.textContent = `拖拽绘制${shape.label} · Esc 取消`;
+    document.body.append(hint);
+  };
+
+  const toggleShapesPanel = () => {
+    if (document.getElementById(SHAPES_PANEL_ID)) closeShapesPanel();
+    else openShapesPanel(activateShapeTool);
+  };
+
+  const scheduleEnsure = () => {
+    window.cancelAnimationFrame(frame);
+    frame = window.requestAnimationFrame(() => ensureButtons(options, toggleShapesPanel));
+  };
+
+  ensureButtons(options, toggleShapesPanel);
   const observer = new MutationObserver(scheduleEnsure);
   observer.observe(document.documentElement, { childList: true, subtree: true });
   window.addEventListener("resize", scheduleEnsure);
@@ -324,12 +401,104 @@ export function installPageUi(options: PageUiOptions): () => void {
     const panel = document.getElementById(SHAPES_PANEL_ID);
     const button = document.getElementById(SHAPES_BUTTON_ID);
     if (panel && !panel.contains(target) && !button?.contains(target)) closeShapesPanel();
+    if (
+      activeShape &&
+      target instanceof Element &&
+      !panel?.contains(target) &&
+      !button?.contains(target) &&
+      target.closest(".excalidraw button, .excalidraw [role='button']")
+    ) {
+      deactivateShapeTool();
+    }
   };
   const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") closeShapesPanel();
+    if (event.key !== "Escape") return;
+    if (activeShape) deactivateShapeTool();
+    else closeShapesPanel();
+  };
+
+  const getBounds = (event: PointerEvent) => {
+    if (!dragStart) return null;
+    let endX = event.clientX;
+    let endY = event.clientY;
+    if (event.shiftKey) {
+      const size = Math.max(Math.abs(endX - dragStart.x), Math.abs(endY - dragStart.y));
+      endX = dragStart.x + Math.sign(endX - dragStart.x || 1) * size;
+      endY = dragStart.y + Math.sign(endY - dragStart.y || 1) * size;
+    }
+    const left = Math.min(dragStart.x, endX);
+    const top = Math.min(dragStart.y, endY);
+    const width = Math.abs(endX - dragStart.x);
+    const height = Math.abs(endY - dragStart.y);
+    return {
+      centerX: left + width / 2,
+      centerY: top + height / 2,
+      height,
+      left,
+      top,
+      width,
+    };
+  };
+
+  const updateDrawPreview = (event: PointerEvent) => {
+    if (!activeShape) return;
+    const bounds = getBounds(event);
+    if (!bounds) return;
+    let preview = document.getElementById(DRAW_PREVIEW_ID);
+    if (!preview) {
+      preview = document.createElement("div");
+      preview.id = DRAW_PREVIEW_ID;
+      preview.innerHTML = shapeIcon(activeShape.points);
+      document.body.append(preview);
+    }
+    preview.style.left = `${bounds.left}px`;
+    preview.style.top = `${bounds.top}px`;
+    preview.style.width = `${Math.max(1, bounds.width)}px`;
+    preview.style.height = `${Math.max(1, bounds.height)}px`;
+  };
+
+  const handlePointerDown = (event: PointerEvent) => {
+    if (!activeShape || event.button !== 0 || !(event.target instanceof HTMLCanvasElement)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    dragStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+    updateDrawPreview(event);
+  };
+
+  const handlePointerMove = (event: PointerEvent) => {
+    if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    updateDrawPreview(event);
+  };
+
+  const handlePointerUp = (event: PointerEvent) => {
+    if (!dragStart || !activeShape || event.pointerId !== dragStart.pointerId) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const bounds = getBounds(event);
+    const shape = activeShape;
+    deactivateShapeTool();
+    if (!bounds || bounds.width < 4 || bounds.height < 4) return;
+    void options.onDrawShape(shape.kind, bounds).catch((error: unknown) => {
+      showToast(error instanceof Error ? error.message : String(error));
+    });
+  };
+
+  const handlePointerCancel = (event: PointerEvent) => {
+    if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    deactivateShapeTool();
   };
   document.addEventListener("click", handleDocumentClick, true);
   document.addEventListener("keydown", handleKeydown, true);
+  document.addEventListener("pointerdown", handlePointerDown, true);
+  document.addEventListener("pointermove", handlePointerMove, true);
+  document.addEventListener("pointerup", handlePointerUp, true);
+  document.addEventListener("pointercancel", handlePointerCancel, true);
 
   return () => {
     observer.disconnect();
@@ -337,6 +506,11 @@ export function installPageUi(options: PageUiOptions): () => void {
     window.removeEventListener("resize", scheduleEnsure);
     document.removeEventListener("click", handleDocumentClick, true);
     document.removeEventListener("keydown", handleKeydown, true);
+    document.removeEventListener("pointerdown", handlePointerDown, true);
+    document.removeEventListener("pointermove", handlePointerMove, true);
+    document.removeEventListener("pointerup", handlePointerUp, true);
+    document.removeEventListener("pointercancel", handlePointerCancel, true);
+    deactivateShapeTool();
     document.getElementById(WORKSPACE_BUTTON_ID)?.remove();
     document.getElementById(SHAPES_BUTTON_ID)?.remove();
     document.getElementById(SHAPES_PANEL_ID)?.remove();

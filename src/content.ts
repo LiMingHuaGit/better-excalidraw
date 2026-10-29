@@ -3,7 +3,7 @@ import {
   createExtendedShapeElement,
   type ExtendedShapeKind,
 } from "./geometry";
-import { installPageUi } from "./page-ui";
+import { installPageUi, type DrawnShapeBounds } from "./page-ui";
 
 const EXCALIDRAW_ROOT_SELECTOR = ".excalidraw";
 const FILES_DATABASE_NAME = "files-db";
@@ -210,30 +210,80 @@ async function captureCanvas(): Promise<string> {
   );
 }
 
-async function insertExtendedShape(kind: ExtendedShapeKind): Promise<void> {
-  setSaveStatus(true, "正在插入扩展图形…");
-  try {
-    const content = await captureCanvas();
-    const documentData = JSON.parse(content) as {
-      elements: unknown[];
-      appState: Record<string, unknown>;
-      files: Record<string, unknown>;
-    };
-    const element = createExtendedShapeElement(kind, documentData.appState);
-    const elementId = String(element.id);
-    documentData.elements.push(element);
-    documentData.appState = {
-      ...documentData.appState,
-      selectedElementIds: { [elementId]: true },
-      selectedGroupIds: {},
-    };
-    await loadCanvas(
-      "better-excalidraw-shape.excalidraw",
-      JSON.stringify(documentData),
-    );
-  } finally {
-    setSaveStatus(false);
+function getAppZoom(appState: Record<string, unknown>): number {
+  const zoom = appState.zoom;
+  if (typeof zoom === "number" && zoom > 0) return zoom;
+  if (zoom && typeof zoom === "object") {
+    const value = (zoom as { value?: unknown }).value;
+    if (typeof value === "number" && value > 0) return value;
   }
+  return 1;
+}
+
+async function insertExtendedShape(
+  kind: ExtendedShapeKind,
+  bounds: DrawnShapeBounds,
+): Promise<void> {
+  const root = document.querySelector<HTMLElement>(EXCALIDRAW_ROOT_SELECTOR);
+  const pointerTarget = document.elementFromPoint(bounds.centerX, bounds.centerY);
+  const canvas =
+    pointerTarget instanceof HTMLCanvasElement
+      ? pointerTarget
+      : root?.querySelector<HTMLCanvasElement>("canvas");
+  if (!root || !canvas) throw new Error("没有找到 Excalidraw 画布");
+
+  const appState = parseJson<Record<string, unknown>>(
+    localStorage.getItem("excalidraw-state"),
+    {},
+  );
+  const zoom = getAppZoom(appState);
+  const element = createExtendedShapeElement(
+    kind,
+    appState,
+    bounds.width / zoom,
+    bounds.height / zoom,
+  );
+  const clipboardContent = JSON.stringify({
+    type: "excalidraw/clipboard",
+    elements: [element],
+    files: {},
+  });
+
+  if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "-1");
+  root.focus({ preventScroll: true });
+
+  const pointerInit: PointerEventInit = {
+    bubbles: true,
+    cancelable: true,
+    clientX: bounds.centerX,
+    clientY: bounds.centerY,
+    pointerId: 1,
+    pointerType: "mouse",
+  };
+  canvas.dispatchEvent(new PointerEvent("pointermove", pointerInit));
+  canvas.dispatchEvent(
+    new MouseEvent("mousemove", {
+      bubbles: true,
+      cancelable: true,
+      clientX: bounds.centerX,
+      clientY: bounds.centerY,
+    }),
+  );
+
+  const clipboardData = new DataTransfer();
+  clipboardData.setData(
+    "application/vnd.excalidraw.clipboard+json",
+    clipboardContent,
+  );
+  clipboardData.setData("text/plain", clipboardContent);
+  document.dispatchEvent(
+    new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+      clipboardData,
+    }),
+  );
+  await new Promise((resolve) => window.setTimeout(resolve, 80));
 }
 
 async function openWorkspacePanel(): Promise<void> {
@@ -283,6 +333,6 @@ chrome.runtime.onMessage.addListener(
 );
 
 installPageUi({
-  onInsertShape: insertExtendedShape,
+  onDrawShape: insertExtendedShape,
   onOpenWorkspace: openWorkspacePanel,
 });

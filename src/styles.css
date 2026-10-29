@@ -363,6 +363,102 @@ button:disabled {
   background: #65a96f;
 }
 
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(18, 18, 24, 0.32);
+  backdrop-filter: blur(2px);
+}
+
+.create-dialog {
+  width: min(100%, 320px);
+  padding: 18px;
+  border: 1px solid #dedee6;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(20, 20, 30, 0.22);
+}
+
+.create-dialog h2,
+.create-dialog p {
+  margin: 0;
+}
+
+.create-dialog h2 {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.create-dialog p {
+  margin-top: 4px;
+  color: #777781;
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.create-dialog label {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  color: #5e5e68;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.create-dialog input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d8d8e2;
+  border-radius: 9px;
+  outline: 0;
+  color: #29292f;
+  background: #fff;
+  font-size: 13px;
+}
+
+.create-dialog input:focus {
+  border-color: #8b87df;
+  box-shadow: 0 0 0 3px rgba(105, 101, 219, 0.12);
+}
+
+.create-dialog .dialog-error {
+  margin-top: 8px;
+  color: #c33b42;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.dialog-button {
+  min-width: 68px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #d8d8e2;
+  border-radius: 9px;
+  color: #55555f;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.dialog-button.primary {
+  border-color: #6965db;
+  color: #fff;
+  background: #6965db;
+}
+
 .status.busy .status-dot {
   background: #6965db;
   animation: pulse 1s ease-in-out infinite;
@@ -437,5 +533,28 @@ button:disabled {
 
   .status {
     border-color: #35353d;
+  }
+
+  .create-dialog,
+  .create-dialog input,
+  .dialog-button {
+    border-color: #414149;
+    color: #ededf1;
+    background: #28282e;
+  }
+
+  .create-dialog p,
+  .create-dialog label {
+    color: #a2a2ad;
+  }
+
+  .create-dialog .dialog-error {
+    color: #ff8b91;
+  }
+
+  .dialog-button.primary {
+    border-color: #6965db;
+    color: #fff;
+    background: #6965db;
   }
 }

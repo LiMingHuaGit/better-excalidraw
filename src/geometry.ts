@@ -18,9 +18,6 @@ type ExcalidrawAppState = Record<string, unknown> & {
   currentItemStrokeColor?: string;
   currentItemStrokeStyle?: string;
   currentItemStrokeWidth?: number;
-  scrollX?: number;
-  scrollY?: number;
-  zoom?: number | { value?: number };
 };
 
 const SHAPE_SIZE = 180;
@@ -103,32 +100,29 @@ function randomPositiveInteger(): number {
   return Math.floor(Math.random() * 2_000_000_000) + 1;
 }
 
-function getZoom(appState: ExcalidrawAppState): number {
-  const zoom = appState.zoom;
-  if (typeof zoom === "number" && zoom > 0) return zoom;
-  if (zoom && typeof zoom === "object" && typeof zoom.value === "number") {
-    return zoom.value > 0 ? zoom.value : 1;
-  }
-  return 1;
-}
-
 export function createExtendedShapeElement(
   kind: ExtendedShapeKind,
   appState: ExcalidrawAppState,
+  width: number,
+  height: number,
 ): Record<string, unknown> {
-  const zoom = getZoom(appState);
-  const scrollX = typeof appState.scrollX === "number" ? appState.scrollX : 0;
-  const scrollY = typeof appState.scrollY === "number" ? appState.scrollY : 0;
-  const x = (window.innerWidth / 2 - scrollX) / zoom - SHAPE_SIZE / 2;
-  const y = (window.innerHeight / 2 - scrollY) / zoom - SHAPE_SIZE / 2;
+  const normalizedWidth = Math.max(1, width);
+  const normalizedHeight = Math.max(1, height);
+  const points = SHAPE_POINTS[kind].map(
+    ([pointX, pointY]) =>
+      [
+        (pointX / SHAPE_SIZE) * normalizedWidth,
+        (pointY / SHAPE_SIZE) * normalizedHeight,
+      ] as Point,
+  );
 
   return {
     id: randomId(),
     type: "line",
-    x,
-    y,
-    width: SHAPE_SIZE,
-    height: SHAPE_SIZE,
+    x: 0,
+    y: 0,
+    width: normalizedWidth,
+    height: normalizedHeight,
     angle: 0,
     strokeColor: appState.currentItemStrokeColor ?? "#1e1e1e",
     backgroundColor: appState.currentItemBackgroundColor ?? "transparent",
@@ -149,7 +143,7 @@ export function createExtendedShapeElement(
     created: Date.now(),
     link: null,
     locked: false,
-    points: SHAPE_POINTS[kind],
+    points,
     lastCommittedPoint: null,
     startBinding: null,
     endBinding: null,

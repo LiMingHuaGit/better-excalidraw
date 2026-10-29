@@ -20,6 +20,9 @@ type AppState = {
   status: string;
   permissionRequired: boolean;
   autosaveSeconds: number;
+  createDialogOpen: boolean;
+  newCanvasName: string;
+  newCanvasError: string;
 };
 
 const DEFAULT_AUTOSAVE_SECONDS = 30;
@@ -36,6 +39,9 @@ const state: AppState = {
   status: "请选择一个包含 .excalidraw 文件的目录",
   permissionRequired: false,
   autosaveSeconds: DEFAULT_AUTOSAVE_SECONDS,
+  createDialogOpen: false,
+  newCanvasName: "",
+  newCanvasError: "",
 };
 
 let autosaveTimer: number | null = null;
@@ -113,6 +119,9 @@ function render(): void {
         <button class="primary-button" data-action="choose-workspace" ${state.busy ? "disabled" : ""}>
           ${state.directory ? "更换目录" : "打开工作区目录"}
         </button>
+        <button class="secondary-button" data-action="new-canvas" ${!state.directory || state.busy ? "disabled" : ""}>
+          新建画布
+        </button>
         ${
           state.permissionRequired
             ? '<button class="secondary-button" data-action="reconnect">重新授权目录</button>'
@@ -179,6 +188,29 @@ function render(): void {
         <span class="status-dot"></span>
         <span>${escapeHtml(state.status)}</span>
       </footer>
+      ${
+        state.createDialogOpen
+          ? `<div class="dialog-backdrop" data-role="dialog-backdrop">
+              <form class="create-dialog" data-role="new-canvas-form">
+                <h2>新建画布</h2>
+                <p>画布将保存到当前工作区根目录。</p>
+                <label>
+                  <span>画布名称</span>
+                  <input data-role="new-canvas-name" value="${escapeHtml(state.newCanvasName)}" autocomplete="off" autofocus />
+                </label>
+                ${
+                  state.newCanvasError
+                    ? `<p class="dialog-error" role="alert">${escapeHtml(state.newCanvasError)}</p>`
+                    : ""
+                }
+                <div class="dialog-actions">
+                  <button type="button" class="dialog-button" data-action="cancel-new-canvas">取消</button>
+                  <button type="submit" class="dialog-button primary">创建</button>
+                </div>
+              </form>
+            </div>`
+          : ""
+      }
     </main>
   `;
 }
@@ -271,6 +303,134 @@ async function chooseWorkspace(): Promise<void> {
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
     setStatus(`打开目录失败：${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function getDefaultCanvasName(): string {
+  const names = new Set(
+    state.canvases.map((canvas) => canvas.name.replace(/\.excalidraw$/i, "")),
+  );
+  let index = 1;
+  while (names.has(index === 1 ? "未命名画布" : `未命名画布 ${index}`)) {
+    index += 1;
+  }
+  return index === 1 ? "未命名画布" : `未命名画布 ${index}`;
+}
+
+function openCreateCanvasDialog(): void {
+  state.newCanvasName = getDefaultCanvasName();
+  state.newCanvasError = "";
+  state.createDialogOpen = true;
+  render();
+  window.requestAnimationFrame(() => {
+    const input = app.querySelector<HTMLInputElement>("[data-role='new-canvas-name']");
+    input?.focus();
+    input?.select();
+  });
+}
+
+function closeCreateCanvasDialog(): void {
+  state.createDialogOpen = false;
+  state.newCanvasName = "";
+  state.newCanvasError = "";
+  render();
+}
+
+function showCreateCanvasError(message: string): void {
+  state.newCanvasError = message;
+  render();
+  window.requestAnimationFrame(() => {
+    const input = app.querySelector<HTMLInputElement>("[data-role='new-canvas-name']");
+    input?.focus();
+  });
+}
+
+async function createNewCanvas(): Promise<void> {
+  if (!state.directory) return;
+  const rawName = state.newCanvasName.trim();
+  if (!rawName) {
+    showCreateCanvasError("请输入画布名称");
+    return;
+  }
+  if (/[\\/:*?\"<>|\0]/.test(rawName)) {
+    showCreateCanvasError("画布名称不能包含 \\ / : * ? \" < > | 等字符");
+    return;
+  }
+  if (rawName.startsWith(".")) {
+    showCreateCanvasError("画布名称不能以 . 开头");
+    return;
+  }
+  const fileName = rawName.toLocaleLowerCase().endsWith(".excalidraw")
+    ? rawName
+    : `${rawName}.excalidraw`;
+
+  try {
+    if (!(await ensurePermission(state.directory, true))) {
+      showCreateCanvasError("没有工作区写入权限");
+      return;
+    }
+
+    try {
+      await state.directory.getFileHandle(fileName);
+      showCreateCanvasError("工作区中已存在同名画布");
+      return;
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "NotFoundError")) {
+        throw error;
+      }
+    }
+
+    state.createDialogOpen = false;
+    state.newCanvasError = "";
+    render();
+
+    if (state.activePath) {
+      const saved = await saveActiveCanvas({
+        quiet: true,
+        refresh: false,
+        displayLoading: true,
+        loadingText: "正在保存当前画布…",
+      });
+      if (!saved) {
+        state.createDialogOpen = true;
+        state.newCanvasName = rawName;
+        showCreateCanvasError("当前画布保存失败，尚未创建新画布");
+        return;
+      }
+    }
+    setStatus(`正在创建 ${fileName}…`, true);
+
+    const handle = await state.directory.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    try {
+      await writable.write(
+        JSON.stringify(
+          {
+            type: "excalidraw",
+            version: 2,
+            source: "https://excalidraw.com",
+            elements: [],
+            appState: { viewBackgroundColor: "#ffffff" },
+            files: {},
+          },
+          null,
+          2,
+        ),
+      );
+      await writable.close();
+    } catch (error) {
+      await writable.abort().catch(() => undefined);
+      throw error;
+    }
+
+    state.activePath = null;
+    lastSavedContent = null;
+    await refreshWorkspace();
+    await openCanvas(fileName);
+  } catch (error) {
+    const message = `创建失败：${error instanceof Error ? error.message : String(error)}`;
+    if (state.createDialogOpen) showCreateCanvasError(message);
+    else setStatus(message);
   }
 }
 
@@ -446,6 +606,10 @@ async function reconnectWorkspace(): Promise<void> {
 
 app.addEventListener("click", (event) => {
   const target = event.target as HTMLElement;
+  if (target.dataset.role === "dialog-backdrop") {
+    closeCreateCanvasDialog();
+    return;
+  }
   const actionButton = target.closest<HTMLElement>("[data-action]");
   const canvasButton = target.closest<HTMLElement>("[data-canvas-path]");
 
@@ -461,6 +625,12 @@ app.addEventListener("click", (event) => {
     case "reconnect":
       void reconnectWorkspace();
       break;
+    case "new-canvas":
+      openCreateCanvasDialog();
+      break;
+    case "cancel-new-canvas":
+      closeCreateCanvasDialog();
+      break;
     case "refresh":
       void refreshWorkspace();
       break;
@@ -475,12 +645,23 @@ app.addEventListener("click", (event) => {
 
 app.addEventListener("input", (event) => {
   const target = event.target as HTMLInputElement;
+  if (target.dataset.role === "new-canvas-name") {
+    state.newCanvasName = target.value;
+    return;
+  }
   if (target.dataset.role !== "search") return;
   state.filter = target.value;
   render();
   const search = app.querySelector<HTMLInputElement>("[data-role='search']");
   search?.focus();
   search?.setSelectionRange(state.filter.length, state.filter.length);
+});
+
+app.addEventListener("submit", (event) => {
+  const form = event.target as HTMLFormElement;
+  if (form.dataset.role !== "new-canvas-form") return;
+  event.preventDefault();
+  void createNewCanvas();
 });
 
 app.addEventListener("change", (event) => {
