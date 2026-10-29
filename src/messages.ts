@@ -18,10 +18,15 @@ export type PingMessage = {
   type: "BETTER_EXCALIDRAW_PING";
 };
 
+export type OpenSidePanelMessage = {
+  type: "BETTER_EXCALIDRAW_OPEN_SIDE_PANEL";
+};
+
 export type WorkspaceMessage =
   | LoadCanvasMessage
   | CaptureCanvasMessage
   | SaveStatusMessage
+  | OpenSidePanelMessage
   | PingMessage;
 
 export type MessageResponse =

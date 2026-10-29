@@ -1,4 +1,9 @@
 import type { MessageResponse, WorkspaceMessage } from "./messages";
+import {
+  createExtendedShapeElement,
+  type ExtendedShapeKind,
+} from "./geometry";
+import { installPageUi } from "./page-ui";
 
 const EXCALIDRAW_ROOT_SELECTOR = ".excalidraw";
 const FILES_DATABASE_NAME = "files-db";
@@ -205,6 +210,39 @@ async function captureCanvas(): Promise<string> {
   );
 }
 
+async function insertExtendedShape(kind: ExtendedShapeKind): Promise<void> {
+  setSaveStatus(true, "正在插入扩展图形…");
+  try {
+    const content = await captureCanvas();
+    const documentData = JSON.parse(content) as {
+      elements: unknown[];
+      appState: Record<string, unknown>;
+      files: Record<string, unknown>;
+    };
+    const element = createExtendedShapeElement(kind, documentData.appState);
+    const elementId = String(element.id);
+    documentData.elements.push(element);
+    documentData.appState = {
+      ...documentData.appState,
+      selectedElementIds: { [elementId]: true },
+      selectedGroupIds: {},
+    };
+    await loadCanvas(
+      "better-excalidraw-shape.excalidraw",
+      JSON.stringify(documentData),
+    );
+  } finally {
+    setSaveStatus(false);
+  }
+}
+
+async function openWorkspacePanel(): Promise<void> {
+  const response = (await chrome.runtime.sendMessage({
+    type: "BETTER_EXCALIDRAW_OPEN_SIDE_PANEL",
+  } satisfies WorkspaceMessage)) as MessageResponse;
+  if (!response.ok) throw new Error(response.error);
+}
+
 chrome.runtime.onMessage.addListener(
   (
     message: WorkspaceMessage,
@@ -243,3 +281,8 @@ chrome.runtime.onMessage.addListener(
     return false;
   },
 );
+
+installPageUi({
+  onInsertShape: insertExtendedShape,
+  onOpenWorkspace: openWorkspacePanel,
+});
