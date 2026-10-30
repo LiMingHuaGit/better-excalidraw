@@ -126,8 +126,8 @@ function ensureStyles(): void {
     .better-excalidraw-page-button {
       position: fixed;
       z-index: 20;
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       display: grid;
       place-items: center;
       padding: 0;
@@ -157,8 +157,8 @@ function ensureStyles(): void {
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    #${WORKSPACE_BUTTON_ID} { top: 76px; left: 16px; }
-    #${SHAPES_BUTTON_ID} { top: 12px; right: 66px; }
+    #${WORKSPACE_BUTTON_ID} { top: 68px; left: 16px; }
+    #${SHAPES_BUTTON_ID} { top: 12px; right: 62px; }
     #${OPERATIONS_BUTTON_ID} { top: 12px; right: 16px; }
     #${SHAPES_BUTTON_ID}[aria-expanded="true"] {
       color: var(--color-primary, #6965db);
@@ -322,7 +322,7 @@ function ensureStyles(): void {
     }
     @media (max-width: 700px) {
       #${WORKSPACE_BUTTON_ID} { top: 68px; left: 8px; }
-      #${SHAPES_BUTTON_ID} { right: 58px; }
+      #${SHAPES_BUTTON_ID} { right: 54px; }
       #${OPERATIONS_BUTTON_ID} { right: 8px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -333,13 +333,23 @@ function ensureStyles(): void {
   document.head.append(style);
 }
 
-function findNativeToolbar(): HTMLElement | null {
+function findNativeToolbar(): {
+  referenceButton: HTMLElement;
+  toolbar: HTMLElement;
+} | null {
   const buttons = Array.from(
     document.querySelectorAll<HTMLElement>("button, [role='button']"),
   );
   const rectangleButton = buttons.find((button) => {
-    const label = `${button.getAttribute("aria-label") ?? ""} ${button.getAttribute("title") ?? ""}`;
-    return /(^|\s)(矩形|Rectangle)(\s|$)/i.test(label);
+    const label = `${button.getAttribute("aria-label") ?? ""} ${
+      button.getAttribute("title") ?? ""
+    }`;
+    const rect = button.getBoundingClientRect();
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      /(^|\s)(矩形|Rectangle)(\s|$)/i.test(label)
+    );
   });
   if (!rectangleButton) return null;
 
@@ -348,30 +358,108 @@ function findNativeToolbar(): HTMLElement | null {
     const rect = node.getBoundingClientRect();
     const buttonCount = node.querySelectorAll("button, [role='button']").length;
     if (buttonCount >= 8 && rect.width >= 320 && rect.height >= 36 && rect.height <= 80) {
-      return node;
+      return { referenceButton: rectangleButton, toolbar: node };
     }
   }
   return null;
 }
 
+function getButtonLabel(button: HTMLElement): string {
+  return `${button.getAttribute("aria-label") ?? ""} ${
+    button.getAttribute("title") ?? ""
+  }`.trim();
+}
+
+function findNativeMenuButton(): HTMLElement | null {
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      ".excalidraw button, .excalidraw [role='button']",
+    ),
+  ).filter((button) => {
+    if (
+      button.id === WORKSPACE_BUTTON_ID ||
+      button.id === SHAPES_BUTTON_ID ||
+      button.id === OPERATIONS_BUTTON_ID
+    ) {
+      return false;
+    }
+    const rect = button.getBoundingClientRect();
+    return (
+      rect.width >= 30 &&
+      rect.width <= 56 &&
+      rect.height >= 30 &&
+      rect.height <= 56 &&
+      rect.left >= 0 &&
+      rect.left <= 90 &&
+      rect.top >= 0 &&
+      rect.top <= 90
+    );
+  });
+  return (
+    candidates.find((button) => /menu|菜单/i.test(getButtonLabel(button))) ??
+    candidates.sort((left, right) => {
+      const leftRect = left.getBoundingClientRect();
+      const rightRect = right.getBoundingClientRect();
+      return leftRect.left + leftRect.top - (rightRect.left + rightRect.top);
+    })[0] ??
+    null
+  );
+}
+
+function applyButtonMetrics(
+  button: HTMLElement,
+  rect: Pick<DOMRect, "width" | "height">,
+): void {
+  const width = Math.round(rect.width);
+  const height = Math.round(rect.height);
+  button.style.width = `${width}px`;
+  button.style.height = `${height}px`;
+  const iconSize = Math.round(
+    Math.min(22, Math.max(18, Math.min(width, height) * 0.55)),
+  );
+  const icon = button.querySelector<SVGElement>("svg");
+  if (icon) {
+    icon.style.width = `${iconSize}px`;
+    icon.style.height = `${iconSize}px`;
+  }
+}
+
 function positionShapeControls(): void {
+  const workspaceButton = document.getElementById(WORKSPACE_BUTTON_ID);
   const shapesButton = document.getElementById(SHAPES_BUTTON_ID);
   const operationsButton = document.getElementById(OPERATIONS_BUTTON_ID);
-  if (!shapesButton || !operationsButton) return;
-  const toolbar = findNativeToolbar();
-  if (toolbar) {
-    const rect = toolbar.getBoundingClientRect();
-    const preferredLeft = rect.right + 10;
-    const fitsRight = preferredLeft + 94 <= window.innerWidth - 8;
-    const shapesLeft = fitsRight ? preferredLeft : rect.left - 104;
-    const operationsLeft = shapesLeft + 50;
+  if (!workspaceButton || !shapesButton || !operationsButton) return;
+
+  const nativeMenuButton = findNativeMenuButton();
+  if (nativeMenuButton) {
+    const menuRect = nativeMenuButton.getBoundingClientRect();
+    applyButtonMetrics(workspaceButton, menuRect);
+    workspaceButton.style.left = `${Math.round(menuRect.left)}px`;
+    workspaceButton.style.right = "auto";
+    workspaceButton.style.top = `${Math.round(menuRect.bottom + 20)}px`;
+  }
+
+  const toolbarMatch = findNativeToolbar();
+  if (toolbarMatch) {
+    const toolbarRect = toolbarMatch.toolbar.getBoundingClientRect();
+    const referenceRect = toolbarMatch.referenceButton.getBoundingClientRect();
+    const buttonWidth = Math.round(referenceRect.width);
+    const gap = 6;
+    const controlsWidth = buttonWidth * 2 + gap;
+    const preferredLeft = toolbarRect.right + 10;
+    const fitsRight = preferredLeft + controlsWidth <= window.innerWidth - 8;
+    const shapesLeft = fitsRight
+      ? preferredLeft
+      : toolbarRect.left - controlsWidth - 10;
+    const operationsLeft = shapesLeft + buttonWidth + gap;
     for (const [button, left] of [
       [shapesButton, shapesLeft],
       [operationsButton, operationsLeft],
     ] as const) {
+      applyButtonMetrics(button, referenceRect);
       button.style.left = `${Math.max(8, left)}px`;
       button.style.right = "auto";
-      button.style.top = `${Math.max(8, rect.top)}px`;
+      button.style.top = `${Math.max(8, referenceRect.top)}px`;
     }
   }
 

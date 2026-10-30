@@ -221,6 +221,14 @@ function setStatus(status: string, busy = false): void {
   render();
 }
 
+async function persistWorkspaceStorage(): Promise<void> {
+  try {
+    await navigator.storage?.persist?.();
+  } catch {
+    // 持久化存储只是防止目录句柄被回收，不应阻塞工作区打开。
+  }
+}
+
 async function ensurePermission(
   directory: FileSystemDirectoryHandle,
   request: boolean,
@@ -299,6 +307,7 @@ async function chooseWorkspace(): Promise<void> {
     state.activePath = null;
     state.permissionRequired = false;
     await saveWorkspaceHandle(directory);
+    await persistWorkspaceStorage();
     await refreshWorkspace();
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
@@ -678,10 +687,11 @@ async function restoreWorkspace(): Promise<void> {
     const directory = await getWorkspaceHandle();
     if (!directory) return;
     state.directory = directory;
+    await persistWorkspaceStorage();
 
     if (!(await ensurePermission(directory, false))) {
       state.permissionRequired = true;
-      setStatus("点击“重新授权目录”恢复上次工作区");
+      setStatus("Chrome 安全限制：请点击“重新授权目录”恢复上次工作区，无需重新选择目录");
       return;
     }
 
