@@ -1,4 +1,5 @@
 import type { ExtendedShapeKind } from "./geometry";
+import { t } from "./i18n";
 
 type PageUiOptions = {
   onDrawShape: (
@@ -33,24 +34,51 @@ const TOAST_ID = "better-excalidraw-page-toast";
 const DRAW_PREVIEW_ID = "better-excalidraw-draw-preview";
 const DRAW_HINT_ID = "better-excalidraw-draw-hint";
 
-const SHAPES: Array<{
+type ShapeItem = {
   kind: ExtendedShapeKind;
   label: string;
-  points: string;
-}> = [
-  { kind: "triangle", label: "三角形", points: "12,3 21,21 3,21" },
-  { kind: "rightTriangle", label: "直角三角形", points: "4,3 21,21 4,21" },
-  { kind: "pentagon", label: "五边形", points: "12,2 22,9 18,21 6,21 2,9" },
-  { kind: "hexagon", label: "六边形", points: "6,3 18,3 23,12 18,21 6,21 1,12" },
-  { kind: "octagon", label: "八边形", points: "7,2 17,2 22,7 22,17 17,22 7,22 2,17 2,7" },
-  { kind: "trapezoid", label: "梯形", points: "7,3 17,3 22,21 2,21" },
-  { kind: "parallelogram", label: "平行四边形", points: "7,3 22,3 17,21 2,21" },
+  icon: string;
+};
+
+const SHAPE_CATEGORIES: Array<{ label: string; shapes: ShapeItem[] }> = [
   {
-    kind: "star",
-    label: "星形",
-    points: "12,2 14.5,9 22,9 16,13.5 18.5,21 12,16.5 5.5,21 8,13.5 2,9 9.5,9",
+    label: t("categoryBasic"),
+    shapes: [
+      { kind: "triangle", label: t("triangle"), icon: '<polygon points="12,3 21,21 3,21"/>' },
+      { kind: "rightTriangle", label: t("rightTriangle"), icon: '<polygon points="4,3 21,21 4,21"/>' },
+      { kind: "pentagon", label: t("pentagon"), icon: '<polygon points="12,2 22,9 18,21 6,21 2,9"/>' },
+      { kind: "hexagon", label: t("hexagon"), icon: '<polygon points="6,3 18,3 23,12 18,21 6,21 1,12"/>' },
+      { kind: "trapezoid", label: t("trapezoid"), icon: '<polygon points="7,3 17,3 22,21 2,21"/>' },
+      { kind: "parallelogram", label: t("parallelogram"), icon: '<polygon points="7,3 22,3 17,21 2,21"/>' },
+      { kind: "star", label: t("star"), icon: '<polygon points="12,2 14.5,9 22,9 16,13.5 18.5,21 12,16.5 5.5,21 8,13.5 2,9 9.5,9"/>' },
+      { kind: "chevron", label: t("chevron"), icon: '<polygon points="3,3 14,3 22,12 14,21 3,21 11,12"/>' },
+      { kind: "speechBubble", label: t("speechBubble"), icon: '<path d="M4 4h16v12H12l-4 4v-4H4Z"/>' },
+      { kind: "plus", label: t("plus"), icon: '<polygon points="9,2 15,2 15,9 22,9 22,15 15,15 15,22 9,22 9,15 2,15 2,9 9,9"/>' },
+      { kind: "pie", label: t("pie"), icon: '<circle cx="12" cy="12" r="9"/><path class="shape-detail" d="M12 12V3m0 9h9"/>' },
+      { kind: "cube", label: t("cube"), icon: '<path d="m4 7 8-4 8 4v10l-8 4-8-4Z"/><path class="shape-detail" d="m4 7 8 4 8-4M12 11v10"/>' },
+    ],
+  },
+  {
+    label: t("categoryArrows"),
+    shapes: [
+      { kind: "leftArrow", label: t("leftArrow"), icon: '<polygon points="2,12 10,4 10,9 22,9 22,15 10,15 10,20"/>' },
+      { kind: "rightArrow", label: t("rightArrow"), icon: '<polygon points="22,12 14,4 14,9 2,9 2,15 14,15 14,20"/>' },
+      { kind: "doubleArrow", label: t("doubleArrow"), icon: '<polygon points="2,12 8,5 8,9 16,9 16,5 22,12 16,19 16,15 8,15 8,19"/>' },
+    ],
+  },
+  {
+    label: t("categoryFlowchart"),
+    shapes: [
+      { kind: "decision", label: t("decision"), icon: '<polygon points="12,2 22,12 12,22 2,12"/>' },
+      { kind: "process", label: t("predefinedProcess"), icon: '<rect x="3" y="3" width="18" height="18"/><path class="shape-detail" d="M7 3v18M17 3v18"/>' },
+      { kind: "internalStorage", label: t("internalStorage"), icon: '<rect x="3" y="3" width="18" height="18"/><path class="shape-detail" d="M7 3v18M3 7h18"/>' },
+      { kind: "offPageConnector", label: t("offPageConnector"), icon: '<polygon points="3,3 21,3 21,15 12,21 3,15"/>' },
+      { kind: "card", label: t("card"), icon: '<path d="M3 3h13l5 5v13H3Z"/><path class="shape-detail" d="M16 3v5h5"/>' },
+    ],
   },
 ];
+
+const SHAPES = SHAPE_CATEGORIES.flatMap((category) => category.shapes);
 
 const SELECTION_OPERATIONS: Array<{
   operation: SelectionOperation;
@@ -60,29 +88,29 @@ const SELECTION_OPERATIONS: Array<{
 }> = [
   {
     operation: "duplicate",
-    label: "复制一份",
+    label: t("duplicate"),
     shortcut: "Ctrl/⌘ D",
     icon: '<rect x="7" y="7" width="11" height="11" rx="2"/><path d="M15 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
   },
   {
     operation: "rotateClockwise",
-    label: "顺时针旋转 90°",
+    label: t("rotateClockwise"),
     icon: '<path d="M19 8V3m0 0h-5m5 0-3.2 3.2A8 8 0 1 0 20 13"/>',
   },
   {
     operation: "rotateCounterclockwise",
-    label: "逆时针旋转 90°",
+    label: t("rotateCounterclockwise"),
     icon: '<path d="M5 8V3m0 0h5M5 3l3.2 3.2A8 8 0 1 1 4 13"/>',
   },
   {
     operation: "flipHorizontal",
-    label: "水平翻转",
+    label: t("flipHorizontal"),
     shortcut: "Shift H",
     icon: '<path d="M12 3v18M9 5 3 9v6l6 4V5Zm6 0 6 4v6l-6 4V5Z"/>',
   },
   {
     operation: "flipVertical",
-    label: "垂直翻转",
+    label: t("flipVertical"),
     shortcut: "Shift V",
     icon: '<path d="M3 12h18M5 9l4-6h6l4 6H5Zm0 6 4 6h6l4-6H5Z"/>',
   },
@@ -114,8 +142,8 @@ function operationsIcon(): string {
     </svg>`;
 }
 
-function shapeIcon(points: string): string {
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="${points}"/></svg>`;
+function shapeIcon(icon: string): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`;
 }
 
 function ensureStyles(): void {
@@ -171,7 +199,9 @@ function ensureStyles(): void {
     #${SHAPES_PANEL_ID} {
       position: fixed;
       z-index: 21;
-      width: 252px;
+      width: 310px;
+      max-height: min(620px, calc(100vh - 90px));
+      overflow-y: auto;
       padding: 10px;
       border: 1px solid var(--default-border-color, rgba(0, 0, 0, .12));
       border-radius: 12px;
@@ -201,14 +231,15 @@ function ensureStyles(): void {
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .better-excalidraw-shape-heading {
-      margin: 2px 4px 9px;
+      margin: 5px 4px 7px;
       color: var(--text-secondary-color, #6b6b73);
       font: 600 12px/16px system-ui, sans-serif;
     }
     .better-excalidraw-shape-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 6px;
+      margin-bottom: 10px;
     }
     .better-excalidraw-shape-option {
       min-width: 0;
@@ -285,12 +316,15 @@ function ensureStyles(): void {
       height: 100%;
       overflow: visible;
     }
-    #${DRAW_PREVIEW_ID} polygon {
+    #${DRAW_PREVIEW_ID} svg > * {
       fill: rgba(105, 101, 219, .08);
       stroke: var(--color-primary, #6965db);
       stroke-width: 2;
       stroke-linejoin: round;
       vector-effect: non-scaling-stroke;
+    }
+    #${DRAW_PREVIEW_ID} .shape-detail {
+      fill: none;
     }
     #${DRAW_HINT_ID} {
       position: fixed;
@@ -470,7 +504,7 @@ function positionShapeControls(): void {
     const panel = document.getElementById(panelId);
     if (!panel) continue;
     const buttonRect = button.getBoundingClientRect();
-    const fallbackWidth = panelId === SHAPES_PANEL_ID ? 252 : 230;
+    const fallbackWidth = panelId === SHAPES_PANEL_ID ? 310 : 230;
     const panelWidth = panel.getBoundingClientRect().width || fallbackWidth;
     const left = Math.min(
       window.innerWidth - panelWidth - 8,
@@ -503,23 +537,26 @@ function closeOperationsPanel(): void {
     ?.setAttribute("aria-expanded", "false");
 }
 
-function openShapesPanel(onSelectShape: (shape: (typeof SHAPES)[number]) => void): void {
+function openShapesPanel(onSelectShape: (shape: ShapeItem) => void): void {
   closeOperationsPanel();
   closeShapesPanel();
   const panel = document.createElement("div");
   panel.id = SHAPES_PANEL_ID;
   panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-label", "扩展图形");
+  panel.setAttribute("aria-label", t("extendedShapes"));
   panel.innerHTML = `
-    <div class="better-excalidraw-shape-heading">扩展图形</div>
-    <div class="better-excalidraw-shape-grid">
-      ${SHAPES.map(
-        (shape) => `
+    ${SHAPE_CATEGORIES.map(
+      (category) => `
+        <div class="better-excalidraw-shape-heading">${category.label}</div>
+        <div class="better-excalidraw-shape-grid">
+          ${category.shapes.map(
+            (shape) => `
           <button class="better-excalidraw-shape-option" type="button" data-shape="${shape.kind}" aria-label="${shape.label}" title="${shape.label}">
-            ${shapeIcon(shape.points)}
+            ${shapeIcon(shape.icon)}
           </button>`,
-      ).join("")}
-    </div>`;
+          ).join("")}
+        </div>`,
+    ).join("")}`;
 
   panel.addEventListener("click", (event) => {
     const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-shape]");
@@ -544,7 +581,7 @@ function openOperationsPanel(
   const panel = document.createElement("div");
   panel.id = OPERATIONS_PANEL_ID;
   panel.setAttribute("role", "menu");
-  panel.setAttribute("aria-label", "选中图形操作");
+  panel.setAttribute("aria-label", t("selectedShapeActions"));
   panel.innerHTML = SELECTION_OPERATIONS.map(
     (item) => `
       <button class="better-excalidraw-operation-option" type="button" role="menuitem" data-operation="${item.operation}">
@@ -582,8 +619,8 @@ function ensureButtons(
     button.id = WORKSPACE_BUTTON_ID;
     button.className = "better-excalidraw-page-button";
     button.type = "button";
-    button.title = "打开本地画布工作区";
-    button.setAttribute("aria-label", "打开本地画布工作区");
+    button.title = t("openLocalWorkspace");
+    button.setAttribute("aria-label", t("openLocalWorkspace"));
     button.innerHTML = workspaceIcon();
     button.addEventListener("click", () => {
       void options.onOpenWorkspace().catch((error: unknown) => {
@@ -598,8 +635,8 @@ function ensureButtons(
     button.id = SHAPES_BUTTON_ID;
     button.className = "better-excalidraw-page-button";
     button.type = "button";
-    button.title = "扩展图形";
-    button.setAttribute("aria-label", "扩展图形");
+    button.title = t("extendedShapes");
+    button.setAttribute("aria-label", t("extendedShapes"));
     button.setAttribute("aria-expanded", "false");
     button.setAttribute("aria-pressed", "false");
     button.innerHTML = shapesIcon();
@@ -612,8 +649,8 @@ function ensureButtons(
     button.id = OPERATIONS_BUTTON_ID;
     button.className = "better-excalidraw-page-button";
     button.type = "button";
-    button.title = "选中图形操作";
-    button.setAttribute("aria-label", "选中图形操作");
+    button.title = t("selectedShapeActions");
+    button.setAttribute("aria-label", t("selectedShapeActions"));
     button.setAttribute("aria-expanded", "false");
     button.innerHTML = operationsIcon();
     button.addEventListener("click", toggleOperationsPanel);
@@ -625,7 +662,7 @@ function ensureButtons(
 
 export function installPageUi(options: PageUiOptions): () => void {
   let frame = 0;
-  let activeShape: (typeof SHAPES)[number] | null = null;
+  let activeShape: ShapeItem | null = null;
   let dragStart: { x: number; y: number; pointerId: number } | null = null;
 
   const removeDrawPreview = () => {
@@ -641,7 +678,7 @@ export function installPageUi(options: PageUiOptions): () => void {
     document.getElementById(SHAPES_BUTTON_ID)?.setAttribute("aria-pressed", "false");
   };
 
-  const activateShapeTool = (shape: (typeof SHAPES)[number]) => {
+  const activateShapeTool = (shape: ShapeItem) => {
     activeShape = shape;
     removeDrawPreview();
     document.documentElement.classList.add("better-excalidraw-drawing");
@@ -649,7 +686,7 @@ export function installPageUi(options: PageUiOptions): () => void {
     document.getElementById(DRAW_HINT_ID)?.remove();
     const hint = document.createElement("div");
     hint.id = DRAW_HINT_ID;
-    hint.textContent = `拖拽绘制${shape.label} · Esc 取消`;
+    hint.textContent = t("drawShapeHint", { shape: shape.label });
     document.body.append(hint);
   };
 
@@ -746,7 +783,7 @@ export function installPageUi(options: PageUiOptions): () => void {
     if (!preview) {
       preview = document.createElement("div");
       preview.id = DRAW_PREVIEW_ID;
-      preview.innerHTML = shapeIcon(activeShape.points);
+      preview.innerHTML = shapeIcon(activeShape.icon);
       document.body.append(preview);
     }
     preview.style.left = `${bounds.left}px`;

@@ -1,0 +1,27 @@
+{
+  "style": "flowscript-wordmark",
+  "text": "B",
+  "palette": "white-violet",
+  "colors": {
+    "background": "#FFFFFF",
+    "lettering": "#6965DB",
+    "inline": "dark violet",
+    "shadow": "light violet-gray"
+  },
+  "use_case": "Chrome extension application and toolbar icon",
+  "edit_prompt": "Edit only the color scheme of the supplied Better Excalidraw icon. Preserve the uppercase cursive B monogram geometry, proportions, placement, double-line construction, two underline strokes, padding, bevel depth, and overall composition. Change the entire background to clean white #FFFFFF. Change the lettering and underline strokes to brand violet #6965DB, with darker violet inline detail and a soft light-violet/gray shadow for separation on white. Keep the exact visible text as one uppercase B only. Produce a crisp, polished, high-contrast 1024x1024 opaque RGB icon.",
+  "negative_prompt": "Do not change the monogram shape. Do not add symbols, words, borders, mockup frames, transparency, texture, cropping, or watermarks.",
+  "outputs": {
+    "png": "better-excalidraw-icon-flowscript-wordmark-white-violet.png",
+    "svg": "better-excalidraw-icon-flowscript-wordmark-white-violet.svg",
+    "prompt_markdown": "better-excalidraw-icon-flowscript-wordmark-white-violet-prompt.md",
+    "prompt_json": "better-excalidraw-icon-flowscript-wordmark-white-violet-prompt.json"
+  },
+  "validation": [
+    "PNG is 1024x1024 RGB with no alpha",
+    "SVG is a self-contained wrapper embedding the approved PNG",
+    "Rendered text is exactly B and remains readable",
+    "Decorative curves and underline strokes are not cropped",
+    "No border, mockup frame, extra symbol, or transparent background"
+  ]
+}

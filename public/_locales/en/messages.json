@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Better Excalidraw Workspace"
+  },
+  "extensionDescription": {
+    "message": "Turn Excalidraw into a local multi-canvas workspace with autosave and additional geometry tools."
+  },
+  "actionTitle": {
+    "message": "Open Excalidraw workspace"
+  }
+}

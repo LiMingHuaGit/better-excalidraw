@@ -1,8 +1,9 @@
 import type { MessageResponse, WorkspaceMessage } from "./messages";
 import {
-  createExtendedShapeElement,
+  createExtendedShapeElements,
   type ExtendedShapeKind,
 } from "./geometry";
+import { t } from "./i18n";
 import {
   installPageUi,
   type DrawnShapeBounds,
@@ -62,12 +63,12 @@ function isExcalidrawDocument(value: unknown): value is {
 async function loadCanvas(fileName: string, content: string): Promise<string> {
   const parsed = JSON.parse(content) as unknown;
   if (!isExcalidrawDocument(parsed)) {
-    throw new Error("文件不是有效的 Excalidraw 画布");
+    throw new Error(t("invalidExcalidrawFile"));
   }
 
   const root = document.querySelector<HTMLElement>(EXCALIDRAW_ROOT_SELECTOR);
   if (!root) {
-    throw new Error("没有找到 Excalidraw 画布，请刷新网页后重试");
+    throw new Error(t("excalidrawCanvasNotFoundRefresh"));
   }
 
   const file = new File([content], fileName, {
@@ -154,7 +155,7 @@ function getReferencedFileIds(elements: unknown[]): Set<string> {
   return fileIds;
 }
 
-function setSaveStatus(visible: boolean, text = "正在保存当前画布…"): void {
+function setSaveStatus(visible: boolean, text = t("savingCurrent")): void {
   document.getElementById(SAVE_OVERLAY_ID)?.remove();
   if (!visible) return;
 
@@ -255,14 +256,14 @@ async function insertExtendedShape(
     pointerTarget instanceof HTMLCanvasElement
       ? pointerTarget
       : root?.querySelector<HTMLCanvasElement>("canvas");
-  if (!root || !canvas) throw new Error("没有找到 Excalidraw 画布");
+  if (!root || !canvas) throw new Error(t("excalidrawCanvasNotFound"));
 
   const appState = parseJson<Record<string, unknown>>(
     localStorage.getItem("excalidraw-state"),
     {},
   );
   const zoom = getAppZoom(appState);
-  const element = createExtendedShapeElement(
+  const elements = createExtendedShapeElements(
     kind,
     appState,
     bounds.width / zoom,
@@ -270,7 +271,7 @@ async function insertExtendedShape(
   );
   const clipboardContent = JSON.stringify({
     type: "excalidraw/clipboard",
-    elements: [element],
+    elements,
     files: {},
   });
 
@@ -313,7 +314,7 @@ async function insertExtendedShape(
 
 function getExcalidrawRoot(): HTMLElement {
   const root = document.querySelector<HTMLElement>(EXCALIDRAW_ROOT_SELECTOR);
-  if (!root) throw new Error("没有找到 Excalidraw 画布");
+  if (!root) throw new Error(t("excalidrawCanvasNotFound"));
   if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "-1");
   root.focus({ preventScroll: true });
   return root;
@@ -334,7 +335,7 @@ async function getSelectionClipboardData(): Promise<SelectionClipboardData> {
   const raw =
     clipboardData.getData(EXCALIDRAW_CLIPBOARD_MIME) ||
     clipboardData.getData("text/plain");
-  if (!raw) throw new Error("请先在画布中选中一个或多个图形");
+  if (!raw) throw new Error(t("selectShapes"));
 
   const copied = JSON.parse(raw) as {
     elements?: SceneElement[];
@@ -344,7 +345,7 @@ async function getSelectionClipboardData(): Promise<SelectionClipboardData> {
     (element) => !element.isDeleted,
   );
   if (copiedElements.length === 0) {
-    throw new Error("请先在画布中选中一个或多个图形");
+    throw new Error(t("selectShapes"));
   }
 
   const appState = parseJson<{ selectedElementIds?: Record<string, boolean> }>(
@@ -470,7 +471,7 @@ async function rotateSelection(clockwise: boolean): Promise<void> {
   const selection = await getSelectionClipboardData();
   const { allElements, files, selectedElements } = selection;
   if (!selectedElements[0]) {
-    throw new Error("请先在画布中选中一个或多个图形");
+    throw new Error(t("selectShapes"));
   }
   if (
     selectedElements.some(
@@ -481,13 +482,13 @@ async function rotateSelection(clockwise: boolean): Promise<void> {
         element.type === "magicframe",
     )
   ) {
-    throw new Error("当前选区包含不能旋转的图形");
+    throw new Error(t("selectionCannotRotate"));
   }
   const root = getExcalidrawRoot();
   const canvas =
     root.querySelector<HTMLCanvasElement>("canvas.excalidraw__canvas.interactive") ??
     root.querySelector<HTMLCanvasElement>("canvas");
-  if (!canvas) throw new Error("没有找到 Excalidraw 交互画布");
+  if (!canvas) throw new Error(t("interactiveCanvasNotFound"));
   const appState = parseJson<Record<string, unknown>>(
     localStorage.getItem("excalidraw-state"),
     {},

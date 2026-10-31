@@ -1,0 +1,11 @@
+{
+  "extensionName": {
+    "message": "Better Excalidraw 工作区"
+  },
+  "extensionDescription": {
+    "message": "将 Excalidraw 增强为支持自动保存与扩展图形的本地多画布工作区。"
+  },
+  "actionTitle": {
+    "message": "打开 Excalidraw 工作区"
+  }
+}

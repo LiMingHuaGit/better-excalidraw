@@ -1,5 +1,6 @@
 import "./styles.css";
 
+import { applyDocumentLocale, canvasCount, locale, t } from "./i18n";
 import type { MessageResponse, WorkspaceMessage } from "./messages";
 import { getWorkspaceHandle, saveWorkspaceHandle } from "./workspace-db";
 
@@ -36,7 +37,7 @@ const state: AppState = {
   activePath: null,
   filter: "",
   busy: false,
-  status: "请选择一个包含 .excalidraw 文件的目录",
+  status: t("initialStatus"),
   permissionRequired: false,
   autosaveSeconds: DEFAULT_AUTOSAVE_SECONDS,
   createDialogOpen: false,
@@ -55,6 +56,13 @@ function requireAppRoot(): HTMLDivElement {
 }
 
 const app = requireAppRoot();
+applyDocumentLocale();
+document.title =
+  chrome.i18n.getMessage("extensionName") || "Better Excalidraw Workspace";
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 function escapeHtml(value: string): string {
   const node = document.createElement("span");
@@ -69,7 +77,7 @@ function formatSize(bytes: number): string {
 }
 
 function formatDate(timestamp: number): string {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat(locale, {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
@@ -96,7 +104,7 @@ function render(): void {
   const visibleCanvases = state.canvases.filter((canvas) =>
     canvas.relativePath.toLocaleLowerCase().includes(query),
   );
-  const workspaceName = state.directory?.name ?? "未选择工作区";
+  const workspaceName = state.directory?.name ?? t("workspaceNotSelected");
 
   app.innerHTML = `
     <main class="shell">
@@ -104,7 +112,7 @@ function render(): void {
         <div class="brand-mark">B</div>
         <div class="brand-copy">
           <h1>Better Excalidraw</h1>
-          <p>本地画布工作区</p>
+          <p>${t("localCanvasWorkspace")}</p>
         </div>
       </header>
 
@@ -113,37 +121,37 @@ function render(): void {
           <div class="workspace-icon">${icon("folder")}</div>
           <div class="workspace-copy">
             <strong title="${escapeHtml(workspaceName)}">${escapeHtml(workspaceName)}</strong>
-            <span>${state.canvases.length} 个画布</span>
+            <span>${canvasCount(state.canvases.length)}</span>
           </div>
         </div>
         <button class="primary-button" data-action="choose-workspace" ${state.busy ? "disabled" : ""}>
-          ${state.directory ? "更换目录" : "打开工作区目录"}
+          ${state.directory ? t("changeFolder") : t("openWorkspaceFolder")}
         </button>
         <button class="secondary-button" data-action="new-canvas" ${!state.directory || state.busy ? "disabled" : ""}>
-          新建画布
+          ${t("newCanvas")}
         </button>
         ${
           state.permissionRequired
-            ? '<button class="secondary-button" data-action="reconnect">重新授权目录</button>'
+            ? `<button class="secondary-button" data-action="reconnect">${t("reauthorizeFolder")}</button>`
             : ""
         }
       </section>
 
-      <section class="toolbar" aria-label="画布工具栏">
+      <section class="toolbar" aria-label="${t("canvasToolbar")}">
         <label class="search-field">
           ${icon("search")}
-          <input type="search" placeholder="搜索画布" value="${escapeHtml(state.filter)}" data-role="search" />
+          <input type="search" placeholder="${t("searchCanvas")}" value="${escapeHtml(state.filter)}" data-role="search" />
         </label>
-        <button class="icon-button" title="重新扫描" aria-label="重新扫描" data-action="refresh" ${!state.directory || state.busy ? "disabled" : ""}>
+        <button class="icon-button" title="${t("rescan")}" aria-label="${t("rescan")}" data-action="refresh" ${!state.directory || state.busy ? "disabled" : ""}>
           ${icon("refresh")}
         </button>
-        <button class="icon-button" title="保存当前画布" aria-label="保存当前画布" data-action="save" ${!state.activePath || state.busy ? "disabled" : ""}>
+        <button class="icon-button" title="${t("saveCurrentCanvas")}" aria-label="${t("saveCurrentCanvas")}" data-action="save" ${!state.activePath || state.busy ? "disabled" : ""}>
           ${icon("save")}
         </button>
       </section>
 
-      <section class="autosave-settings" aria-label="自动保存设置">
-        <label for="autosave-seconds">自动保存</label>
+      <section class="autosave-settings" aria-label="${t("autosaveSettings")}">
+        <label for="autosave-seconds">${t("autosave")}</label>
         <input
           id="autosave-seconds"
           data-role="autosave-seconds"
@@ -154,11 +162,11 @@ function render(): void {
           value="${state.autosaveSeconds}"
           aria-describedby="autosave-hint"
         />
-        <span>秒</span>
-        <small id="autosave-hint">0 为关闭，最短 ${MIN_AUTOSAVE_SECONDS} 秒</small>
+        <span>${t("seconds")}</span>
+        <small id="autosave-hint">${t("autosaveHint", { min: MIN_AUTOSAVE_SECONDS })}</small>
       </section>
 
-      <section class="canvas-list" aria-label="工作区画布">
+      <section class="canvas-list" aria-label="${t("workspaceCanvases")}">
         ${
           visibleCanvases.length
             ? visibleCanvases
@@ -177,9 +185,9 @@ function render(): void {
             : `<div class="empty-state">${
                 state.directory
                   ? query
-                    ? "没有匹配的画布"
-                    : "目录中没有 .excalidraw 文件"
-                  : "打开一个目录后，画布会显示在这里"
+                    ? t("noMatchingCanvases")
+                    : t("noCanvasFiles")
+                  : t("openFolderEmpty")
               }</div>`
         }
       </section>
@@ -192,10 +200,10 @@ function render(): void {
         state.createDialogOpen
           ? `<div class="dialog-backdrop" data-role="dialog-backdrop">
               <form class="create-dialog" data-role="new-canvas-form">
-                <h2>新建画布</h2>
-                <p>画布将保存到当前工作区根目录。</p>
+                <h2>${t("newCanvas")}</h2>
+                <p>${t("newCanvasDescription")}</p>
                 <label>
-                  <span>画布名称</span>
+                  <span>${t("canvasName")}</span>
                   <input data-role="new-canvas-name" value="${escapeHtml(state.newCanvasName)}" autocomplete="off" autofocus />
                 </label>
                 ${
@@ -204,8 +212,8 @@ function render(): void {
                     : ""
                 }
                 <div class="dialog-actions">
-                  <button type="button" class="dialog-button" data-action="cancel-new-canvas">取消</button>
-                  <button type="submit" class="dialog-button primary">创建</button>
+                  <button type="button" class="dialog-button" data-action="cancel-new-canvas">${t("cancel")}</button>
+                  <button type="submit" class="dialog-button primary">${t("create")}</button>
                 </div>
               </form>
             </div>`
@@ -266,19 +274,19 @@ async function scanDirectory(
   }
 
   return canvases.sort((left, right) =>
-    left.relativePath.localeCompare(right.relativePath, "zh-CN"),
+    left.relativePath.localeCompare(right.relativePath, locale),
   );
 }
 
 async function refreshWorkspace(): Promise<void> {
   if (!state.directory) return;
-  setStatus("正在扫描工作区…", true);
+  setStatus(t("scanningWorkspace"), true);
 
   try {
     if (!(await ensurePermission(state.directory, false))) {
       state.permissionRequired = true;
       state.canvases = [];
-      setStatus("需要重新授权才能读取工作区");
+      setStatus(t("permissionRequired"));
       return;
     }
 
@@ -290,9 +298,9 @@ async function refreshWorkspace(): Promise<void> {
     ) {
       state.activePath = null;
     }
-    setStatus(`已读取 ${state.canvases.length} 个画布`);
+    setStatus(t("canvasesRead", { count: state.canvases.length }));
   } catch (error) {
-    setStatus(`扫描失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("scanFailed", { error: errorText(error) }));
   }
 }
 
@@ -311,7 +319,7 @@ async function chooseWorkspace(): Promise<void> {
     await refreshWorkspace();
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
-    setStatus(`打开目录失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("openFolderFailed", { error: errorText(error) }));
   }
 }
 
@@ -320,10 +328,16 @@ function getDefaultCanvasName(): string {
     state.canvases.map((canvas) => canvas.name.replace(/\.excalidraw$/i, "")),
   );
   let index = 1;
-  while (names.has(index === 1 ? "未命名画布" : `未命名画布 ${index}`)) {
+  while (
+    names.has(
+      index === 1 ? t("unnamedCanvas") : t("unnamedCanvasNumbered", { index }),
+    )
+  ) {
     index += 1;
   }
-  return index === 1 ? "未命名画布" : `未命名画布 ${index}`;
+  return index === 1
+    ? t("unnamedCanvas")
+    : t("unnamedCanvasNumbered", { index });
 }
 
 function openCreateCanvasDialog(): void {
@@ -358,15 +372,15 @@ async function createNewCanvas(): Promise<void> {
   if (!state.directory) return;
   const rawName = state.newCanvasName.trim();
   if (!rawName) {
-    showCreateCanvasError("请输入画布名称");
+    showCreateCanvasError(t("enterCanvasName"));
     return;
   }
   if (/[\\/:*?\"<>|\0]/.test(rawName)) {
-    showCreateCanvasError("画布名称不能包含 \\ / : * ? \" < > | 等字符");
+    showCreateCanvasError(t("invalidCanvasNameChars"));
     return;
   }
   if (rawName.startsWith(".")) {
-    showCreateCanvasError("画布名称不能以 . 开头");
+    showCreateCanvasError(t("invalidCanvasNameDot"));
     return;
   }
   const fileName = rawName.toLocaleLowerCase().endsWith(".excalidraw")
@@ -375,13 +389,13 @@ async function createNewCanvas(): Promise<void> {
 
   try {
     if (!(await ensurePermission(state.directory, true))) {
-      showCreateCanvasError("没有工作区写入权限");
+      showCreateCanvasError(t("noWritePermission"));
       return;
     }
 
     try {
       await state.directory.getFileHandle(fileName);
-      showCreateCanvasError("工作区中已存在同名画布");
+      showCreateCanvasError(t("duplicateCanvasName"));
       return;
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "NotFoundError")) {
@@ -398,16 +412,16 @@ async function createNewCanvas(): Promise<void> {
         quiet: true,
         refresh: false,
         displayLoading: true,
-        loadingText: "正在保存当前画布…",
+        loadingText: t("savingCurrent"),
       });
       if (!saved) {
         state.createDialogOpen = true;
         state.newCanvasName = rawName;
-        showCreateCanvasError("当前画布保存失败，尚未创建新画布");
+        showCreateCanvasError(t("createSaveFailed"));
         return;
       }
     }
-    setStatus(`正在创建 ${fileName}…`, true);
+    setStatus(t("creatingCanvas", { name: fileName }), true);
 
     const handle = await state.directory.getFileHandle(fileName, { create: true });
     const writable = await handle.createWritable();
@@ -437,7 +451,7 @@ async function createNewCanvas(): Promise<void> {
     await refreshWorkspace();
     await openCanvas(fileName);
   } catch (error) {
-    const message = `创建失败：${error instanceof Error ? error.message : String(error)}`;
+    const message = t("createFailed", { error: errorText(error) });
     if (state.createDialogOpen) showCreateCanvasError(message);
     else setStatus(message);
   }
@@ -447,7 +461,7 @@ async function getExcalidrawTab(): Promise<chrome.tabs.Tab> {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const tab = tabs[0];
   if (!tab?.id || !tab.url?.startsWith("https://excalidraw.com/")) {
-    throw new Error("请先打开并选中 excalidraw.com 页面");
+    throw new Error(t("selectExcalidrawTab"));
   }
   return tab;
 }
@@ -469,12 +483,12 @@ async function openCanvas(relativePath: string): Promise<void> {
       quiet: true,
       refresh: false,
       displayLoading: true,
-      loadingText: "正在保存并切换画布…",
+      loadingText: t("savingAndSwitching"),
     });
     if (!saved) return;
   }
 
-  setStatus(`正在加载 ${canvas.name}…`, true);
+  setStatus(t("loadingCanvas", { name: canvas.name }), true);
 
   try {
     const file = await canvas.handle.getFile();
@@ -488,9 +502,9 @@ async function openCanvas(relativePath: string): Promise<void> {
 
     state.activePath = canvas.relativePath;
     lastSavedContent = response.content ?? content;
-    setStatus(`已打开 ${canvas.name}`);
+    setStatus(t("openedCanvas", { name: canvas.name }));
   } catch (error) {
-    setStatus(`加载失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("loadFailed", { error: errorText(error) }));
   }
 }
 
@@ -508,7 +522,7 @@ async function saveActiveCanvas(options: SaveOptions = {}): Promise<boolean> {
   if (!canvas || !state.directory) return true;
   if (state.busy || saveInProgress) return false;
   saveInProgress = true;
-  if (!options.quiet) setStatus(`正在保存 ${canvas.name}…`, true);
+  if (!options.quiet) setStatus(t("savingCanvas", { name: canvas.name }), true);
 
   try {
     if (options.displayLoading) {
@@ -521,17 +535,17 @@ async function saveActiveCanvas(options: SaveOptions = {}): Promise<boolean> {
     }
 
     if (!(await ensurePermission(state.directory, true))) {
-      throw new Error("没有工作区写入权限");
+      throw new Error(t("noWritePermission"));
     }
 
     const response = await sendToExcalidraw({
       type: "BETTER_EXCALIDRAW_CAPTURE_CANVAS",
     });
     if (!response.ok) throw new Error(response.error);
-    if (!response.content) throw new Error("没有读取到当前画布内容");
+    if (!response.content) throw new Error(t("missingCanvasContent"));
 
     if (response.content === lastSavedContent) {
-      if (!options.quiet) setStatus(`${canvas.name} 没有未保存修改`);
+      if (!options.quiet) setStatus(t("noUnsavedChanges", { name: canvas.name }));
       return true;
     }
 
@@ -543,10 +557,12 @@ async function saveActiveCanvas(options: SaveOptions = {}): Promise<boolean> {
     if (options.refresh !== false) {
       await refreshWorkspace();
     }
-    setStatus(`${options.quiet ? "已自动保存" : "已保存"} ${canvas.name}`);
+    setStatus(
+      t(options.quiet ? "autosavedCanvas" : "savedCanvas", { name: canvas.name }),
+    );
     return true;
   } catch (error) {
-    setStatus(`保存失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("saveFailed", { error: errorText(error) }));
     return false;
   } finally {
     if (options.displayLoading) {
@@ -587,7 +603,11 @@ async function updateAutosaveSeconds(rawValue: string): Promise<void> {
   state.autosaveSeconds = seconds;
   await chrome.storage.local.set({ [AUTOSAVE_STORAGE_KEY]: seconds });
   scheduleAutosave();
-  setStatus(seconds === 0 ? "已关闭自动保存" : `每 ${seconds} 秒自动保存`);
+  setStatus(
+    seconds === 0
+      ? t("autosaveDisabled")
+      : t("autosaveInterval", { seconds }),
+  );
 }
 
 async function restoreAutosaveSetting(): Promise<void> {
@@ -603,13 +623,13 @@ async function reconnectWorkspace(): Promise<void> {
   if (!state.directory) return;
   try {
     if (!(await ensurePermission(state.directory, true))) {
-      setStatus("未获得目录授权");
+      setStatus(t("authorizationNotGranted"));
       return;
     }
     state.permissionRequired = false;
     await refreshWorkspace();
   } catch (error) {
-    setStatus(`授权失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("authorizationFailed", { error: errorText(error) }));
   }
 }
 
@@ -646,7 +666,7 @@ app.addEventListener("click", (event) => {
     case "save":
       void saveActiveCanvas({
         displayLoading: true,
-        loadingText: "正在保存当前画布…",
+        loadingText: t("savingCurrent"),
       });
       break;
   }
@@ -691,13 +711,13 @@ async function restoreWorkspace(): Promise<void> {
 
     if (!(await ensurePermission(directory, false))) {
       state.permissionRequired = true;
-      setStatus("Chrome 安全限制：请点击“重新授权目录”恢复上次工作区，无需重新选择目录");
+      setStatus(t("securityReauthorize"));
       return;
     }
 
     await refreshWorkspace();
   } catch (error) {
-    setStatus(`恢复工作区失败：${error instanceof Error ? error.message : String(error)}`);
+    setStatus(t("restoreFailed", { error: errorText(error) }));
   }
 }
 

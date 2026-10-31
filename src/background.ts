@@ -1,4 +1,5 @@
 import type { MessageResponse, WorkspaceMessage } from "./messages";
+import { t } from "./i18n";
 
 chrome.runtime.onInstalled.addListener(() => {
   void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
@@ -16,7 +17,7 @@ chrome.runtime.onMessage.addListener(
   ) => {
     if (message.type !== "BETTER_EXCALIDRAW_OPEN_SIDE_PANEL") return false;
     if (!sender.tab?.id) {
-      sendResponse({ ok: false, error: "无法识别当前 Excalidraw 标签页" });
+      sendResponse({ ok: false, error: t("currentTabNotFound") });
       return false;
     }
 
