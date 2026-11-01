@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://liminghua.fyi/better-excalidraw/sitemap.xml
+Sitemap: https://better-excalidraw.liminghua.fyi/sitemap.xml

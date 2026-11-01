@@ -1,6 +1,6 @@
 # Better Excalidraw Workspace
 
-[English](#english) · [简体中文](#简体中文) · [Landing page](https://liminghua.fyi/better-excalidraw/) · [Chrome Web Store](https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm)
+[English](#english) · [简体中文](#简体中文) · [Landing page](https://better-excalidraw.liminghua.fyi/) · [Chrome Web Store](https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm)
 
 ## English
 
