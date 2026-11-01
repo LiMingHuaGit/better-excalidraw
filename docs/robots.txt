@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://liminghuagit.github.io/better-excalidraw/sitemap.xml
