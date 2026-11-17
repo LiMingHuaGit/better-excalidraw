@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Better Excalidraw Workspace — Local Projects & More Shapes</title>
-  <meta name="description" content="Turn Excalidraw into a local project workspace. Open a folder, switch and auto-save multiple canvases, create new drawings, and draw extended native-style shapes.">
+  <title>Save Excalidraw to a Local Folder — Chrome Extension | Better Excalidraw Workspace</title>
+  <meta name="description" content="A free, open-source Chrome extension to save Excalidraw to a local folder. Open a folder as a workspace, switch and autosave multiple canvases, and draw more native-style shapes.">
   <meta name="keywords" content="Excalidraw extension, Excalidraw workspace, Excalidraw local files, Excalidraw shapes, Chrome extension">
   <meta name="author" content="Minghua Li">
   <meta name="robots" content="index, follow, max-image-preview:large">
@@ -94,7 +94,7 @@
       <div class="container hero-grid">
         <div>
           <p class="version-badge"><b>v0.7.0</b> · Free &amp; open source · Updated 2026-11-17</p>
-          <h1>Your Excalidraw files, finally in one workspace.</h1>
+          <h1>Save Excalidraw to a local folder, all in one workspace.</h1>
           <p class="lead">Open a local folder, switch between canvases, auto-save your work, and draw more native-style shapes—without leaving the official Excalidraw website.</p>
           <div class="actions">
             <a class="button primary" href="https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm">Add to Chrome</a>
@@ -192,7 +192,10 @@
       <div class="container">
         <div class="section-head"><h2>Frequently asked questions</h2></div>
         <div class="faq">
-          <details><summary>Is Better Excalidraw Workspace free?</summary><p>Yes. It is free and open source under the MIT License. You can review the code, report issues, or contribute on GitHub.</p></details>
+          <details><summary>How do I save Excalidraw drawings to a local folder?</summary><p>Install the extension, open <code>https://excalidraw.com/</code>, open the workspace side panel, and choose a local folder. Every <code>.excalidraw</code> file is then read and saved directly in that folder through the browser's File System Access API—you can save manually, save before switching, or set an autosave interval.</p></details>
+          <details><summary>Can I manage multiple Excalidraw canvases and drawings?</summary><p>Yes. The side panel lists every <code>.excalidraw</code> file in your folder (including subfolders) so you can search, switch between canvases, and create new drawings. Autosave keeps each canvas up to date as you move between them.</p></details>
+          <details><summary>Is Better Excalidraw Workspace free and open source?</summary><p>Yes. Version 0.7.0 is free and open source under the MIT License. Install it from the <a href="https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm">Chrome Web Store</a>, or review the code, report issues, and contribute on GitHub.</p></details>
+          <details><summary>What permissions does it need and where is my data?</summary><p>It uses the <code>storage</code> permission for local preferences (such as the autosave interval) and runs its content script only on the <code>https://excalidraw.com/</code> host. Your canvas files and folder access stay on your computer—nothing is uploaded to a developer server or cloud.</p></details>
           <details><summary>Does it upload my drawings anywhere?</summary><p>No. Canvas files are read and saved locally through browser-granted folder access. No account is required and nothing is uploaded to a developer server.</p></details>
           <details><summary>Which browsers and versions are supported?</summary><p>Google Chrome 116 or later on ChromeOS, macOS, Windows, and Linux. It is a Manifest V3 extension.</p></details>
           <details><summary>Does it modify the Excalidraw website or need an account?</summary><p>It adds a workspace button, an extended shape panel, and canvas switching only on the official excalidraw.com. No Excalidraw account or cloud service is required.</p></details>
