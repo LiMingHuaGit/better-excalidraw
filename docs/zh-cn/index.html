@@ -21,9 +21,14 @@
   <meta property="og:url" content="https://better-excalidraw.liminghua.fyi/zh-cn/">
   <meta property="og:locale" content="zh_CN">
   <meta property="og:locale:alternate" content="en_US">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://better-excalidraw.liminghua.fyi/assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="在 Excalidraw 官方网站上打开的 Better Excalidraw Workspace 侧边栏">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Better Excalidraw Workspace">
   <meta name="twitter:description" content="为 Excalidraw 增加本地项目管理和扩展几何图形。">
+  <meta name="twitter:image" content="https://better-excalidraw.liminghua.fyi/assets/og-image.jpg">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -33,19 +38,45 @@
     "description": "一款 Chrome 扩展，为 Excalidraw 官方网站增加本地项目工作区、多画布切换、自动保存和接近原生体验的扩展几何图形。",
     "url": "https://better-excalidraw.liminghua.fyi/zh-cn/",
     "downloadUrl": "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm",
+    "installUrl": "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm",
     "applicationCategory": "DesignApplication",
-    "applicationSubCategory": "浏览器扩展",
+    "applicationSubCategory": "Browser Extension",
     "operatingSystem": "ChromeOS, macOS, Windows, Linux",
     "browserRequirements": "Google Chrome 116 或更高版本",
     "softwareVersion": "0.7.0",
+    "softwareHelp": "https://github.com/LiMingHuaGit/better-excalidraw/issues",
     "license": "https://opensource.org/license/mit",
     "isAccessibleForFree": true,
+    "dateModified": "2026-11-17",
     "inLanguage": ["zh-CN", "en"],
-    "author": { "@type": "Person", "name": "李明华", "url": "https://github.com/LiMingHuaGit" },
+    "image": "https://better-excalidraw.liminghua.fyi/assets/og-image.jpg",
+    "screenshot": [
+      "https://better-excalidraw.liminghua.fyi/assets/workspace-zh.webp",
+      "https://better-excalidraw.liminghua.fyi/assets/shapes-zh.webp",
+      "https://better-excalidraw.liminghua.fyi/assets/switching-zh.webp"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": { "@id": "https://liminghua.fyi/#person" },
+    "publisher": { "@id": "https://liminghua.fyi/#person" },
     "sameAs": [
       "https://github.com/LiMingHuaGit/better-excalidraw",
       "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm"
     ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://liminghua.fyi/#person",
+    "name": "李明华",
+    "alternateName": "Minghua Li",
+    "url": "https://liminghua.fyi/",
+    "sameAs": ["https://github.com/LiMingHuaGit"]
   }
   </script>
 </head>
@@ -53,13 +84,14 @@
   <header>
     <nav class="container" aria-label="主导航">
       <a class="brand" href="./" aria-label="Better Excalidraw Workspace 首页"><span class="brand-mark" aria-hidden="true">B</span><span>Better Excalidraw Workspace</span></a>
-      <div class="nav-links"><a href="#features">功能</a><a href="#privacy">隐私</a><a href="https://github.com/LiMingHuaGit/better-excalidraw">GitHub</a><a class="lang" href="../" lang="en">English</a></div>
+      <div class="nav-links"><a href="#features">功能</a><a href="#install">安装</a><a href="#faq">常见问题</a><a href="#privacy">隐私</a><a href="https://github.com/LiMingHuaGit/better-excalidraw">GitHub</a><a class="lang" href="../" lang="en">English</a></div>
     </nav>
   </header>
   <main>
     <section class="hero">
       <div class="container hero-grid">
         <div>
+          <p class="version-badge"><b>v0.7.0</b> · 免费开源 · 更新于 2026-11-17</p>
           <h1>终于，可以在一个工作区管理所有 Excalidraw 画布。</h1>
           <p class="lead">打开本地文件夹、切换多个画布、自动保存内容，并绘制更多接近原生体验的图形——全程无需离开 Excalidraw 官方网站。</p>
           <div class="actions">
@@ -85,6 +117,87 @@
         </div>
       </div>
     </section>
+    <section class="subsection" id="screenshots">
+      <div class="container">
+        <div class="section-head"><h2>在真实的 Excalidraw 网站上运行。</h2><p>以下为扩展在 Chrome 侧边栏、官方 excalidraw.com 上运行的真实界面截图。</p></div>
+        <div class="shots">
+          <figure class="shot"><img src="../assets/workspace-zh.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Better Excalidraw Workspace 侧边栏在 Excalidraw 画布旁列出本地 .excalidraw 文件"><figcaption>本地多画布工作区</figcaption></figure>
+          <figure class="shot"><img src="../assets/shapes-zh.webp" width="1280" height="800" loading="lazy" decoding="async" alt="包含多边形、星形、箭头和流程图符号的扩展图形面板"><figcaption>接近原生体验的扩展图形</figcaption></figure>
+          <figure class="shot"><img src="../assets/switching-zh.webp" width="1280" height="800" loading="lazy" decoding="async" alt="在多个画布之间搜索、切换并自动保存"><figcaption>搜索、切换与自动保存</figcaption></figure>
+        </div>
+      </div>
+    </section>
+    <section id="install">
+      <div class="container">
+        <div class="section-head"><h2>几分钟即可安装。</h2><p>从 Chrome 应用商店添加，或从源码自行构建。</p></div>
+        <div class="info-grid">
+          <div class="card">
+            <h3>从 Chrome 应用商店安装</h3>
+            <ol class="steps">
+              <li>打开 <a href="https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm">Chrome 应用商店页面</a>。</li>
+              <li>点击<b>添加到 Chrome</b> 并确认安装。</li>
+              <li>打开 <code>https://excalidraw.com/</code>。</li>
+              <li>点击扩展图标打开工作区侧栏，然后选择一个本地文件夹。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>从源码构建</h3>
+            <ol class="steps">
+              <li>克隆<a href="https://github.com/LiMingHuaGit/better-excalidraw">代码仓库</a>并执行 <code>pnpm install</code>。</li>
+              <li>执行 <code>pnpm build</code> 生成 <code>dist/</code> 目录。</li>
+              <li>打开 <code>chrome://extensions/</code> 并开启<b>开发者模式</b>。</li>
+              <li>点击<b>加载已解压的扩展程序</b>，选择 <code>dist/</code> 目录。</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="subsection" id="details">
+      <div class="container">
+        <div class="section-head"><h2>权限、数据与兼容性。</h2><p>清楚说明扩展能访问什么，以及在哪里运行。</p></div>
+        <div class="info-grid">
+          <div class="card">
+            <h3>权限与数据边界</h3>
+            <ul>
+              <li><code>sidePanel</code>——在 Chrome 侧边栏中展示本地画布工作区。</li>
+              <li><code>storage</code>——在本地保存自动保存间隔、最近使用的工作区句柄等设置。</li>
+              <li><code>https://excalidraw.com/*</code>——内容脚本仅在官方 Excalidraw 网站运行。</li>
+              <li>画布文件和目录授权信息仅保存在本地，不会上传到开发者服务器或云端。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>兼容性</h3>
+            <ul>
+              <li>Google Chrome 116 或更高版本（Manifest V3）。</li>
+              <li>支持 ChromeOS、macOS、Windows 和 Linux。</li>
+              <li>使用浏览器文件系统访问 API 读写本地目录。</li>
+              <li>界面跟随 Chrome/系统语言（中文或英文）。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>当前限制</h3>
+          <ul>
+            <li>仅支持官方 <code>https://excalidraw.com/</code> 网站。</li>
+            <li>Chrome 的目录权限可能在浏览器重启后失效，此时需要在侧栏重新授权一次。</li>
+            <li>标准 Chrome 扩展无法获取目录的真实系统路径，因此不能直接在 Finder/资源管理器中打开当前工作区；该能力需要额外安装 Native Messaging 本地助手。</li>
+            <li>协作房间中的内容不建议直接保存到本地工作区文件。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section id="faq">
+      <div class="container">
+        <div class="section-head"><h2>常见问题</h2></div>
+        <div class="faq">
+          <details><summary>Better Excalidraw Workspace 是免费的吗？</summary><p>是的。采用 MIT 许可证，完全免费且开源。你可以在 GitHub 查看代码、提交问题或参与贡献。</p></details>
+          <details><summary>它会上传我的绘图吗？</summary><p>不会。画布文件仅通过浏览器授予的目录权限在本地读取和保存。无需账号，也不会上传到开发者服务器。</p></details>
+          <details><summary>支持哪些浏览器和版本？</summary><p>Google Chrome 116 或更高版本，支持 ChromeOS、macOS、Windows 和 Linux。它是 Manifest V3 扩展。</p></details>
+          <details><summary>它会修改 Excalidraw 网站或需要账号吗？</summary><p>它仅在官方 excalidraw.com 上增加工作区按钮、扩展图形面板和画布切换功能，无需 Excalidraw 账号或任何云服务。</p></details>
+          <details><summary>在哪里反馈问题或提出需求？</summary><p>请在 <a href="https://github.com/LiMingHuaGit/better-excalidraw/issues">GitHub Issues</a> 提交问题。</p></details>
+        </div>
+      </div>
+    </section>
     <section class="privacy" id="privacy">
       <div class="container privacy-grid">
         <div><h2>本地优先。</h2><p class="lead">工作区文件始终由你掌控。</p></div>
@@ -97,6 +210,6 @@
       </div>
     </section>
   </main>
-  <footer><div class="container footer-row"><span>© 2026 李明华。Better Excalidraw Workspace 是独立扩展，与 Excalidraw 官方无隶属关系。</span><span class="footer-links"><a href="https://github.com/LiMingHuaGit/better-excalidraw">源代码</a><a href="https://legal.liminghua.fyi/products/better-excalidraw/privacy/">隐私政策</a></span></div></footer>
+  <footer><div class="container footer-row"><span>© 2026 李明华。Better Excalidraw Workspace 是独立扩展，与 Excalidraw 官方无隶属关系。</span><span class="footer-links"><a href="https://github.com/LiMingHuaGit/better-excalidraw">源代码</a><a href="https://github.com/LiMingHuaGit/better-excalidraw/issues">问题与支持</a><a href="https://legal.liminghua.fyi/products/better-excalidraw/privacy/">隐私政策</a></span></div></footer>
 </body>
 </html>

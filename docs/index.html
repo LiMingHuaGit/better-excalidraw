@@ -21,9 +21,14 @@
   <meta property="og:url" content="https://better-excalidraw.liminghua.fyi/">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="zh_CN">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://better-excalidraw.liminghua.fyi/assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Better Excalidraw Workspace side panel open on the official Excalidraw website">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Better Excalidraw Workspace">
   <meta name="twitter:description" content="Local project management and extended geometry tools for Excalidraw.">
+  <meta name="twitter:image" content="https://better-excalidraw.liminghua.fyi/assets/og-image.jpg">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -33,23 +38,45 @@
     "description": "A Chrome extension that adds local project workspaces, multi-canvas switching, auto-save, and extended native-style geometry tools to the official Excalidraw website.",
     "url": "https://better-excalidraw.liminghua.fyi/",
     "downloadUrl": "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm",
+    "installUrl": "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm",
     "applicationCategory": "DesignApplication",
     "applicationSubCategory": "Browser Extension",
     "operatingSystem": "ChromeOS, macOS, Windows, Linux",
     "browserRequirements": "Google Chrome 116 or later",
     "softwareVersion": "0.7.0",
+    "softwareHelp": "https://github.com/LiMingHuaGit/better-excalidraw/issues",
     "license": "https://opensource.org/license/mit",
     "isAccessibleForFree": true,
+    "dateModified": "2026-11-17",
     "inLanguage": ["en", "zh-CN"],
-    "author": {
-      "@type": "Person",
-      "name": "Minghua Li",
-      "url": "https://github.com/LiMingHuaGit"
+    "image": "https://better-excalidraw.liminghua.fyi/assets/og-image.jpg",
+    "screenshot": [
+      "https://better-excalidraw.liminghua.fyi/assets/workspace-en.webp",
+      "https://better-excalidraw.liminghua.fyi/assets/shapes-en.webp",
+      "https://better-excalidraw.liminghua.fyi/assets/switching-en.webp"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
     },
+    "author": { "@id": "https://liminghua.fyi/#person" },
+    "publisher": { "@id": "https://liminghua.fyi/#person" },
     "sameAs": [
       "https://github.com/LiMingHuaGit/better-excalidraw",
       "https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm"
     ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": "https://liminghua.fyi/#person",
+    "name": "李明华",
+    "alternateName": "Minghua Li",
+    "url": "https://liminghua.fyi/",
+    "sameAs": ["https://github.com/LiMingHuaGit"]
   }
   </script>
 </head>
@@ -57,13 +84,14 @@
   <header>
     <nav class="container" aria-label="Primary navigation">
       <a class="brand" href="./" aria-label="Better Excalidraw Workspace home"><span class="brand-mark" aria-hidden="true">B</span><span>Better Excalidraw Workspace</span></a>
-      <div class="nav-links"><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="https://github.com/LiMingHuaGit/better-excalidraw">GitHub</a><a class="lang" href="./zh-cn/" lang="zh-CN">中文</a></div>
+      <div class="nav-links"><a href="#features">Features</a><a href="#install">Install</a><a href="#faq">FAQ</a><a href="#privacy">Privacy</a><a href="https://github.com/LiMingHuaGit/better-excalidraw">GitHub</a><a class="lang" href="./zh-cn/" lang="zh-CN">中文</a></div>
     </nav>
   </header>
   <main>
     <section class="hero">
       <div class="container hero-grid">
         <div>
+          <p class="version-badge"><b>v0.7.0</b> · Free &amp; open source · Updated 2026-11-17</p>
           <h1>Your Excalidraw files, finally in one workspace.</h1>
           <p class="lead">Open a local folder, switch between canvases, auto-save your work, and draw more native-style shapes—without leaving the official Excalidraw website.</p>
           <div class="actions">
@@ -89,6 +117,87 @@
         </div>
       </div>
     </section>
+    <section class="subsection" id="screenshots">
+      <div class="container">
+        <div class="section-head"><h2>See it on the real Excalidraw website.</h2><p>Actual screenshots of the extension running in Chrome's side panel on the official excalidraw.com.</p></div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/workspace-en.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Better Excalidraw Workspace side panel listing local .excalidraw files next to the Excalidraw canvas"><figcaption>Local multi-canvas workspace</figcaption></figure>
+          <figure class="shot"><img src="./assets/shapes-en.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Extended native-style shape panel with polygons, stars, arrows and flowchart symbols"><figcaption>Native-like extended shapes</figcaption></figure>
+          <figure class="shot"><img src="./assets/switching-en.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Searching and switching between multiple canvases with autosave"><figcaption>Search, switch, and autosave</figcaption></figure>
+        </div>
+      </div>
+    </section>
+    <section id="install">
+      <div class="container">
+        <div class="section-head"><h2>Install in a couple of minutes.</h2><p>Add it from the Chrome Web Store, or build it from source for full control.</p></div>
+        <div class="info-grid">
+          <div class="card">
+            <h3>From the Chrome Web Store</h3>
+            <ol class="steps">
+              <li>Open the <a href="https://chromewebstore.google.com/detail/failnnidjndkmiabcleibfjmfnpdhflm">Chrome Web Store listing</a>.</li>
+              <li>Click <b>Add to Chrome</b> and confirm the installation.</li>
+              <li>Open <code>https://excalidraw.com/</code>.</li>
+              <li>Click the extension icon to open the workspace side panel, then choose a local folder.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Build from source</h3>
+            <ol class="steps">
+              <li>Clone <a href="https://github.com/LiMingHuaGit/better-excalidraw">the repository</a> and run <code>pnpm install</code>.</li>
+              <li>Run <code>pnpm build</code> to generate the <code>dist/</code> folder.</li>
+              <li>Open <code>chrome://extensions/</code> and enable <b>Developer mode</b>.</li>
+              <li>Click <b>Load unpacked</b> and select the <code>dist/</code> directory.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="subsection" id="details">
+      <div class="container">
+        <div class="section-head"><h2>Permissions, data, and compatibility.</h2><p>Exactly what the extension can access, and where it runs.</p></div>
+        <div class="info-grid">
+          <div class="card">
+            <h3>Permissions &amp; data boundary</h3>
+            <ul>
+              <li><code>sidePanel</code> — shows the local canvas workspace in Chrome's side panel.</li>
+              <li><code>storage</code> — stores local preferences such as the autosave interval and the most recently used workspace handle.</li>
+              <li><code>https://excalidraw.com/*</code> — the content script runs only on the official Excalidraw website.</li>
+              <li>Canvas files and directory permissions stay on your computer; nothing is uploaded to a developer server or cloud.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Compatibility</h3>
+            <ul>
+              <li>Google Chrome 116 or later (Manifest V3).</li>
+              <li>Works on ChromeOS, macOS, Windows, and Linux.</li>
+              <li>Uses the browser File System Access API for local folder access.</li>
+              <li>Interface follows your Chrome/system language (English or Simplified Chinese).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>Current limitations</h3>
+          <ul>
+            <li>Works only on the official <code>https://excalidraw.com/</code> site.</li>
+            <li>Chrome may revoke folder permission after a browser restart; re-authorize once from the side panel.</li>
+            <li>Standard Chrome extensions cannot read a folder's real system path, so the extension cannot reveal the workspace in Finder/Explorer without an extra Native Messaging helper.</li>
+            <li>Content from live collaboration rooms is not recommended for direct saving into a local workspace file.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section id="faq">
+      <div class="container">
+        <div class="section-head"><h2>Frequently asked questions</h2></div>
+        <div class="faq">
+          <details><summary>Is Better Excalidraw Workspace free?</summary><p>Yes. It is free and open source under the MIT License. You can review the code, report issues, or contribute on GitHub.</p></details>
+          <details><summary>Does it upload my drawings anywhere?</summary><p>No. Canvas files are read and saved locally through browser-granted folder access. No account is required and nothing is uploaded to a developer server.</p></details>
+          <details><summary>Which browsers and versions are supported?</summary><p>Google Chrome 116 or later on ChromeOS, macOS, Windows, and Linux. It is a Manifest V3 extension.</p></details>
+          <details><summary>Does it modify the Excalidraw website or need an account?</summary><p>It adds a workspace button, an extended shape panel, and canvas switching only on the official excalidraw.com. No Excalidraw account or cloud service is required.</p></details>
+          <details><summary>Where do I report a bug or request a feature?</summary><p>Open an issue on the <a href="https://github.com/LiMingHuaGit/better-excalidraw/issues">GitHub issue tracker</a>.</p></details>
+        </div>
+      </div>
+    </section>
     <section class="privacy" id="privacy">
       <div class="container privacy-grid">
         <div><h2>Local by design.</h2><p class="lead">Your workspace files stay under your control.</p></div>
@@ -101,6 +210,6 @@
       </div>
     </section>
   </main>
-  <footer><div class="container footer-row"><span>© 2026 Minghua Li. Better Excalidraw Workspace is an independent extension and is not affiliated with Excalidraw.</span><span class="footer-links"><a href="https://github.com/LiMingHuaGit/better-excalidraw">Source</a><a href="https://legal.liminghua.fyi/products/better-excalidraw/privacy/">Privacy</a></span></div></footer>
+  <footer><div class="container footer-row"><span>© 2026 Minghua Li. Better Excalidraw Workspace is an independent extension and is not affiliated with Excalidraw.</span><span class="footer-links"><a href="https://github.com/LiMingHuaGit/better-excalidraw">Source</a><a href="https://github.com/LiMingHuaGit/better-excalidraw/issues">Issues &amp; support</a><a href="https://legal.liminghua.fyi/products/better-excalidraw/privacy/">Privacy</a></span></div></footer>
 </body>
 </html>
